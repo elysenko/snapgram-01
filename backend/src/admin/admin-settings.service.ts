@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConfigResolver, PLACEHOLDER } from '../lib/config';
+import { StorageService } from '../storage/storage.service';
 
 export interface AdminSetting {
   key: string;
@@ -103,6 +104,7 @@ export class AdminSettingsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigResolver,
+    private readonly storage: StorageService,
   ) {}
 
   /** Effective value per key, with secrets masked before they leave the process. */
@@ -160,6 +162,10 @@ export class AdminSettingsService {
         }),
       ),
     );
+
+    // The S3 client memoises endpoint, bucket and credentials on first use, so
+    // new values would otherwise sit in the table unused until the next restart.
+    this.storage.reconfigure();
 
     return { updated: entries.map(([key]) => key) };
   }

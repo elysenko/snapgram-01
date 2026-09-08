@@ -5,7 +5,7 @@ const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? val
 
 export class SignupDto {
   /**
-   * `require_tld: false` accepts single-label domains such as "alice@demo".
+   * `require_tld: false` accepts single-label domains (host with no dot).
    * The spec's demo accounts and the platform-minted logins use that form, and
    * the default rule would reject them outright.
    */

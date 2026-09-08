@@ -6,7 +6,7 @@
  * pipeline's migrate Job executes `npx prisma migrate deploy && node prisma/seed/seed.js`.
  *
  * Input:  COLOSSUS_ACCOUNTS_JSON — injected into the pod env by Colossus at provision:
- *         [{"role":"ADMIN","email":"admin@demo.local","password":"…","login_path":"/login"}, …]
+ *         a JSON array of {role, email, password, login_path} objects, one per contract role.
  * Effect: upserts one `colossus_accounts` row AND one `User` per account, hashing the
  *         password with bcryptjs exactly as the auth service verifies it. Idempotent —
  *         re-running re-asserts the hash so the platform-held password always logs in.
@@ -65,7 +65,7 @@ function resolveAppRole(contractRole) {
 }
 
 /**
- * Derive the public profile slug from the email local part (alice@demo -> "alice"),
+ * Derive the public profile slug from the email local part (the text before the @),
  * appending a numeric suffix on collision. `handle` is nullable in the schema so a
  * failure here can never block the login, but every platform account should still
  * get a working /u/:handle profile page.
@@ -90,16 +90,20 @@ async function upsertAccount(account) {
     update: { role: account.role, passwordHash, loginPath },
     create: { role: account.role, email: account.email, passwordHash, loginPath },
   });
-  const displayName = `${role} (Colossus)`;
   const existing = await prisma.user.findUnique({
     where: { email: account.email },
-    select: { id: true, handle: true },
+    select: { id: true, handle: true, displayName: true },
   });
   const handle = existing && existing.handle
     ? existing.handle
     : await deriveHandle(account.email, existing ? existing.id : null);
+  // The profile name is the account holder's to change: only seed a default when
+  // there isn't one yet, so a redeploy never reverts an edit made in the app.
+  const displayName = (existing && existing.displayName) || `${role} (Colossus)`;
   await prisma.user.upsert({
     where: { email: account.email },
+    // passwordHash is re-asserted on EVERY run so the platform-held credential
+    // never drifts from the stored hash.
     update: { role, passwordHash, handle, displayName },
     create: { email: account.email, name: displayName, displayName, handle, role, passwordHash },
   });

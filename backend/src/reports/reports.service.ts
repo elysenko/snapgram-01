@@ -31,9 +31,12 @@ export class ReportsService {
       throw new NotFoundException('No such post');
     }
 
+    // `status` is re-asserted on update, not just on create. A moderator closing
+    // the queue entry must not permanently silence this reporter: if they report
+    // the post again, the row belongs back in the open queue.
     const report = await this.prisma.report.upsert({
       where: { postId_reporterId: { postId, reporterId } },
-      update: { reason: dto.reason },
+      update: { reason: dto.reason, status: ReportStatus.open },
       create: { postId, reporterId, reason: dto.reason, status: ReportStatus.open },
     });
 

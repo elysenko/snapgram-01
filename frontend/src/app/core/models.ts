@@ -1,8 +1,8 @@
 /**
  * Wire models for the SnapGram API.
- * These mirror the backend response shapes exactly; the service layer replaces
- * the mock signal initialisers in the feature components with real calls that
- * return these types.
+ * These mirror the backend response shapes exactly (see backend/src/common/wire.ts,
+ * which is the single place those shapes are constructed). Every feature component
+ * reads them from a real HTTP call through the `shared/api/*` services.
  */
 
 export type UserRole = 'USER' | 'MODERATOR' | 'ADMIN';

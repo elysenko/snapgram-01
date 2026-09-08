@@ -183,7 +183,10 @@ export class PostsService {
     }
 
     if (dto.caption === undefined) {
-      return toPostSummary(post, false);
+      // No-op save. The like state still has to be looked up: returning `false`
+      // here made the client's view model drop the caller's own like on edit.
+      const unchanged = await this.likedIds([id], viewerId);
+      return toPostSummary(post, unchanged.has(id));
     }
 
     const updated = await this.prisma.post.update({
@@ -206,8 +209,11 @@ export class PostsService {
       throw new ForbiddenException('You can only delete your own posts');
     }
 
-    await this.prisma.post.delete({ where: { id } });
+    // Object first, then the row. The row is the only record of the key, so
+    // dropping it first and then failing to delete the object would strand that
+    // object in the bucket with nothing left to reclaim it by.
     await this.storage.deleteObjectQuietly(post.imageKey);
+    await this.prisma.post.delete({ where: { id } });
 
     return { deleted: true, id };
   }
@@ -229,9 +235,18 @@ export class PostsService {
       });
 
       if (existing) {
-        await tx.like.delete({ where: { postId_userId: { postId: id, userId: viewerId } } });
+        // deleteMany, not delete: a concurrent unlike that already removed the
+        // row would make `delete` throw P2025 instead of being a no-op.
+        await tx.like.deleteMany({ where: { postId: id, userId: viewerId } });
       } else {
-        await tx.like.create({ data: { postId: id, userId: viewerId } });
+        // upsert, not create: two in-flight likes from the same user both read
+        // `existing === null`, and the loser of that race violated the composite
+        // primary key and surfaced as a 500.
+        await tx.like.upsert({
+          where: { postId_userId: { postId: id, userId: viewerId } },
+          update: {},
+          create: { postId: id, userId: viewerId },
+        });
       }
 
       const likeCount = await tx.like.count({ where: { postId: id } });

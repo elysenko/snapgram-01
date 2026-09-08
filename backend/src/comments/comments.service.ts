@@ -77,10 +77,10 @@ export class CommentsService {
       throw new NotFoundException('No such comment');
     }
 
-    const allowed =
-      comment.authorId === viewer.id ||
-      comment.post.authorId === viewer.id ||
-      isModerator(viewer.role);
+    // Author-or-moderator only. The post owner is deliberately NOT included:
+    // letting them delete other members' comments is a moderation power, and the
+    // client (comment-list.component.ts canDelete) never offers them the button.
+    const allowed = comment.authorId === viewer.id || isModerator(viewer.role);
     if (!allowed) {
       throw new ForbiddenException('You cannot delete this comment');
     }

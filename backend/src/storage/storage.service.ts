@@ -75,6 +75,15 @@ export class StorageService implements OnModuleInit {
     }
   }
 
+  /**
+   * Drop the memoised S3 client so the next call re-reads configuration.
+   * Called after Admin -> Settings writes new credentials, which otherwise would
+   * not take effect until the process restarted.
+   */
+  reconfigure(): void {
+    this.storage.reset();
+  }
+
   async healthy(): Promise<boolean> {
     try {
       await this.storage.headBucket();

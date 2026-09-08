@@ -67,28 +67,42 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
-    const handle = await this.deriveHandle(email);
 
-    try {
-      const user = await this.prisma.user.create({
-        data: {
-          email,
-          name: dto.displayName,
-          displayName: dto.displayName,
-          handle,
-          passwordHash,
-          role: Role.USER,
-        },
-        select: USER_SELECT,
-      });
-      return { accessToken: this.signAccessToken(user), user: toSessionUser(user) };
-    } catch (error) {
-      // Loses the race against a concurrent signup with the same email.
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        throw new ConflictException('An account with that email already exists');
+    // deriveHandle is a check-then-insert, so two concurrent signups whose emails
+    // share a local part ("alice@a", "alice@b") can both pick "alice". Retry on a
+    // handle collision instead of failing the signup: the second caller gets
+    // "alice2". An email collision is a genuine conflict and is reported as one.
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const handle = await this.deriveHandle(email);
+      try {
+        const user = await this.prisma.user.create({
+          data: {
+            email,
+            name: dto.displayName,
+            displayName: dto.displayName,
+            handle,
+            passwordHash,
+            role: Role.USER,
+          },
+          select: USER_SELECT,
+        });
+        return { accessToken: this.signAccessToken(user), user: toSessionUser(user) };
+      } catch (error) {
+        if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
+          throw error;
+        }
+        // `meta.target` names the constraint that actually fired, so a handle
+        // race is no longer misreported as a duplicate email.
+        const target = error.meta?.target;
+        const fields = Array.isArray(target) ? target.map(String) : [String(target ?? '')];
+        if (fields.some((field) => field.includes('email'))) {
+          throw new ConflictException('An account with that email already exists');
+        }
+        // Handle collision — loop and derive a fresh candidate.
       }
-      throw error;
     }
+
+    throw new ConflictException('Could not allocate a profile handle — please try again');
   }
 
   /**
