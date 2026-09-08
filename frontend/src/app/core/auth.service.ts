@@ -167,6 +167,32 @@ export class AuthService {
     this.clearSession();
     void this.router.navigateByUrl('/explore');
   }
+
+  /**
+   * Preview-only local sign-in for the `Skip login/signup — Demo Mode` shortcut on the
+   * auth screens (mockup→product identity contract: the UI mockup review approved this
+   * affordance, so it stays wired through to the shipped product). It fabricates a
+   * session entirely in the browser — no credentials, no network call — and is gated by
+   * the build-time `COLOSSUS_PREVIEW` constant, which esbuild folds to `false` in every
+   * real deployment, so this branch never runs outside the mockup preview build.
+   */
+  previewSignIn(): void {
+    if (!COLOSSUS_PREVIEW) {
+      return;
+    }
+    this.persist(
+      {
+        id: 'preview-member',
+        email: 'preview-member@preview.local',
+        handle: 'preview',
+        displayName: 'Preview Member',
+        bio: null,
+        avatarUrl: null,
+        role: 'USER',
+      },
+      'preview-mode-local-session',
+    );
+  }
 }
 
 /**
