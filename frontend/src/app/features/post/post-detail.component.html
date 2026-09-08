@@ -1,0 +1,121 @@
+<div class="page" data-testid="post-detail-page">
+  @if (loading()) {
+    <div class="detail" data-testid="post-loading">
+      <div class="skeleton detail__media"></div>
+      <div class="card card-pad">
+        <div class="skeleton sk-line"></div>
+        <div class="skeleton sk-line sk-line--short"></div>
+      </div>
+    </div>
+  } @else if (error()) {
+    <div class="banner banner--error" role="alert" data-testid="post-error">{{ error() }}</div>
+  } @else if (missing()) {
+    <div class="state" data-testid="post-missing">
+      <span class="state__title">This post is no longer available</span>
+      <p class="muted">
+        It was either deleted by its author or removed by a moderator. Removed posts disappear from every feed.
+      </p>
+      <a class="btn btn--primary" routerLink="/explore" data-testid="post-missing-explore">Back to Explore</a>
+    </div>
+  } @else {
+    <div class="detail" data-testid="post-detail">
+      <figure class="detail__media">
+        <img [src]="post()!.imageUrl" [alt]="post()!.caption || 'Photo by ' + post()!.author.displayName"
+             width="900" height="900" />
+      </figure>
+
+      <aside class="detail__side">
+        <div class="card card-pad">
+          <header class="detail__author">
+            <a class="detail__author-link" [routerLink]="['/u', post()!.author.handle]" data-testid="post-detail-author">
+              <app-avatar [name]="post()!.author.displayName" [handle]="post()!.author.handle" [size]="44" [ring]="true" />
+              <span class="detail__names">
+                <span class="detail__name">{{ post()!.author.displayName }}</span>
+                <span class="subtle">&#64;{{ post()!.author.handle }} · {{ post()!.createdAt }}</span>
+              </span>
+            </a>
+            @if (!isOwnPost() && authorProfile()) {
+              <app-follow-button
+                [following]="authorProfile()!.viewerFollows"
+                [handle]="post()!.author.handle"
+                [compact]="true"
+                (toggled)="toggleFollow($event)"
+              />
+            }
+          </header>
+
+          @if (editing()) {
+            <div class="field" data-testid="caption-editor">
+              <label class="label" for="caption-edit">Edit caption</label>
+              <textarea
+                id="caption-edit"
+                class="textarea"
+                name="caption"
+                rows="4"
+                [maxlength]="2200"
+                [ngModel]="captionDraft()"
+                (ngModelChange)="onCaptionDraft($event)"
+                data-testid="caption-input"
+              ></textarea>
+              <div class="detail__edit-actions">
+                <button type="button" class="btn btn--ghost btn--sm" (click)="editing.set(false)" data-testid="caption-cancel">
+                  Cancel
+                </button>
+                <button type="button" class="btn btn--primary btn--sm" (click)="saveCaption()" data-testid="caption-save">
+                  Save caption
+                </button>
+              </div>
+            </div>
+          } @else if (post()!.caption) {
+            <p class="detail__caption" data-testid="post-detail-caption">{{ post()!.caption }}</p>
+          }
+
+          <div class="detail__actions">
+            <button
+              type="button"
+              class="act"
+              [class.act--liked]="post()!.viewerHasLiked"
+              (click)="toggleLike()"
+              [attr.aria-pressed]="post()!.viewerHasLiked"
+              data-testid="post-detail-like"
+            >
+              <span class="act__glyph" aria-hidden="true">{{ post()!.viewerHasLiked ? '♥' : '♡' }}</span>
+              <span class="tabular" data-testid="post-detail-like-count">{{ post()!.likeCount }}</span>
+            </button>
+            <span class="act act--static">
+              <span class="act__glyph" aria-hidden="true">💬</span>
+              <span class="tabular" data-testid="post-detail-comment-count">{{ post()!.commentCount }}</span>
+            </span>
+
+            @if (isOwnPost()) {
+              <button type="button" class="act act--right" (click)="startEdit()" data-testid="post-edit">Edit caption</button>
+              <button type="button" class="act act--danger" (click)="deletePost()" data-testid="post-delete">Delete</button>
+            } @else {
+              <button type="button" class="act act--right act--report" (click)="openReport()" data-testid="post-report">
+                <span class="act__glyph" aria-hidden="true">⚑</span>
+                <span>Report</span>
+              </button>
+            }
+          </div>
+
+          <app-comment-list
+            [comments]="postComments()"
+            [currentHandle]="auth.currentUser()?.handle ?? ''"
+            [canModerate]="auth.isModerator()"
+            (added)="addComment($event)"
+            (removed)="removeComment($event)"
+          />
+        </div>
+      </aside>
+    </div>
+  }
+
+  @if (reportOpen()) {
+    <app-report-dialog
+      [postId]="postId()"
+      [submitted]="reportSubmitted()"
+      (dismissed)="closeReport()"
+      (confirmed)="confirmReport($event)"
+    />
+  }
+</div>

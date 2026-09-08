@@ -1,0 +1,108 @@
+<!--
+  data-testid="app-ready" is the universal readiness landmark: it enters the DOM only
+  after Angular bootstraps this root component, so the render gate can wait on it to
+  confirm the SPA hydrated (not a blank shell / 404 / failed bundle). Keep it here.
+-->
+<div class="shell" data-testid="app-ready">
+  @if (!bare()) {
+    <header class="topbar" data-testid="app-header">
+      <a class="brand" routerLink="/explore" data-testid="brand-link">
+        <span class="brand__mark" aria-hidden="true"></span>
+        <span class="brand__word">SnapGram</span>
+      </a>
+
+      <nav class="topnav" aria-label="Primary" data-testid="primary-nav">
+        <a routerLink="/explore" routerLinkActive="is-active" class="topnav__link" data-testid="nav-explore">Explore</a>
+        <a routerLink="/feed" routerLinkActive="is-active" class="topnav__link" data-testid="nav-feed">Feed</a>
+        <a routerLink="/upload" routerLinkActive="is-active" class="topnav__link" data-testid="nav-upload">Upload</a>
+        @if (showModeration()) {
+          <a routerLink="/moderation" routerLinkActive="is-active" class="topnav__link" data-testid="nav-moderation">
+            Moderation
+          </a>
+        }
+      </nav>
+
+      <div class="topbar__end">
+        <a class="btn btn--gradient btn--sm upload-cta" routerLink="/upload" data-testid="header-upload-cta">
+          New post
+        </a>
+
+        @if (auth.isAuthenticated()) {
+          <button
+            type="button"
+            class="account-btn"
+            (click)="toggleMenu()"
+            [attr.aria-expanded]="menuOpen()"
+            aria-haspopup="menu"
+            data-testid="account-menu-trigger"
+          >
+            <app-avatar
+              [name]="auth.currentUser()!.displayName"
+              [handle]="auth.currentUser()!.handle"
+              [size]="34"
+            />
+            <span class="account-btn__name">{{ auth.currentUser()!.displayName }}</span>
+          </button>
+
+          @if (menuOpen()) {
+            <div class="menu-scrim" (click)="closeMenu()" data-testid="account-menu-scrim"></div>
+            <div class="menu" role="menu" data-testid="account-menu">
+              <div class="menu__head">
+                <strong>{{ auth.currentUser()!.displayName }}</strong>
+                <span class="subtle">&#64;{{ auth.currentUser()!.handle }}</span>
+              </div>
+              <a class="menu__item" [routerLink]="profileLink()" (click)="closeMenu()" data-testid="menu-profile">
+                My profile
+              </a>
+              <a class="menu__item" routerLink="/settings/profile" (click)="closeMenu()" data-testid="menu-settings">
+                Edit profile
+              </a>
+              @if (showModeration()) {
+                <a class="menu__item" routerLink="/moderation" (click)="closeMenu()" data-testid="menu-moderation">
+                  Moderation queue
+                </a>
+                <a class="menu__item" routerLink="/admin/settings" (click)="closeMenu()" data-testid="menu-admin">
+                  Admin settings
+                </a>
+              }
+              <button type="button" class="menu__item menu__item--danger" (click)="signOut()" data-testid="menu-signout">
+                Sign out
+              </button>
+            </div>
+          }
+        } @else {
+          <a class="btn btn--ghost btn--sm" routerLink="/login" data-testid="header-signin">Sign in</a>
+        }
+      </div>
+    </header>
+  }
+
+  <main class="shell__main" [class.shell__main--bare]="bare()" data-testid="app-main">
+    <router-outlet />
+  </main>
+
+  @if (!bare()) {
+    <nav class="tabbar" aria-label="Mobile" data-testid="mobile-tabbar">
+      <a routerLink="/explore" routerLinkActive="is-active" class="tabbar__item" data-testid="tab-explore">
+        <span class="tabbar__glyph" aria-hidden="true">◧</span>
+        <span class="tabbar__label">Explore</span>
+      </a>
+      <a routerLink="/feed" routerLinkActive="is-active" class="tabbar__item" data-testid="tab-feed">
+        <span class="tabbar__glyph" aria-hidden="true">≡</span>
+        <span class="tabbar__label">Feed</span>
+      </a>
+      <a routerLink="/upload" routerLinkActive="is-active" class="tabbar__item tabbar__item--accent" data-testid="tab-upload">
+        <span class="tabbar__glyph" aria-hidden="true">+</span>
+        <span class="tabbar__label">Post</span>
+      </a>
+      <a [routerLink]="profileLink()" routerLinkActive="is-active" class="tabbar__item" data-testid="tab-profile">
+        <span class="tabbar__glyph" aria-hidden="true">◍</span>
+        <span class="tabbar__label">Profile</span>
+      </a>
+      <a routerLink="/settings/profile" routerLinkActive="is-active" class="tabbar__item" data-testid="tab-account">
+        <span class="tabbar__glyph" aria-hidden="true">⚙</span>
+        <span class="tabbar__label">Account</span>
+      </a>
+    </nav>
+  }
+</div>

@@ -1,0 +1,43 @@
+<div class="page" data-testid="explore-page">
+  <section class="hero" data-testid="explore-hero">
+    <div class="hero__copy">
+      <span class="badge badge--brand">Public gallery</span>
+      <h1 class="hero__title">Explore SnapGram</h1>
+      <p class="hero__sub">
+        The 24 newest photos from every member. No account needed — sign in when you want a feed of your own.
+      </p>
+      <div class="hero__cta">
+        @if (auth.isAuthenticated()) {
+          <a class="btn btn--gradient" routerLink="/feed" data-testid="explore-to-feed">Go to your feed</a>
+          <a class="btn btn--ghost" routerLink="/upload" data-testid="explore-to-upload">Upload a photo</a>
+        } @else {
+          <a class="btn btn--gradient" routerLink="/signup" data-testid="explore-to-signup">Create an account</a>
+          <a class="btn btn--ghost" routerLink="/login" data-testid="explore-to-login">Sign in</a>
+        }
+      </div>
+    </div>
+    <dl class="hero__stats">
+      <div><dt>Photos</dt><dd class="tabular" data-testid="explore-count">{{ posts().length }}</dd></div>
+      <div><dt>Photographers</dt><dd class="tabular">{{ photographers() }}</dd></div>
+      <div><dt>Likes</dt><dd class="tabular">{{ totalLikes() }}</dd></div>
+    </dl>
+  </section>
+
+  @if (loading()) {
+    <ul class="skeleton-grid" data-testid="explore-loading">
+      @for (item of skeletons; track item) {
+        <li class="skeleton skeleton-grid__cell"></li>
+      }
+    </ul>
+  } @else if (error()) {
+    <div class="banner banner--error" role="alert" data-testid="explore-error">{{ error() }}</div>
+  } @else if (isEmpty()) {
+    <div class="state" data-testid="explore-empty">
+      <span class="state__title">Nothing here yet</span>
+      <p class="muted">Be the first to post — your photo will show up right here.</p>
+      <a class="btn btn--primary" routerLink="/upload">Upload a photo</a>
+    </div>
+  } @else {
+    <app-post-grid [posts]="posts()" testid="explore-grid" />
+  }
+</div>

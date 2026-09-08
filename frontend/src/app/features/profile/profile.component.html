@@ -1,0 +1,95 @@
+<div class="page" data-testid="profile-page">
+  @if (loading()) {
+    <div class="skeleton profile-skeleton" data-testid="profile-loading"></div>
+  } @else if (error()) {
+    <div class="banner banner--error" role="alert" data-testid="profile-error">{{ error() }}</div>
+  } @else if (missing()) {
+    <div class="state" data-testid="profile-missing">
+      <span class="state__title">No member with that handle</span>
+      <p class="muted">The profile you followed a link to does not exist, or the account was closed.</p>
+      <a class="btn btn--primary" routerLink="/explore">Back to Explore</a>
+    </div>
+  } @else {
+    <header class="profile card card-pad" data-testid="profile-header">
+      <app-avatar
+        [name]="profile()!.displayName"
+        [handle]="profile()!.handle"
+        [imageUrl]="profile()!.avatarUrl"
+        [size]="96"
+        [ring]="true"
+      />
+
+      <div class="profile__info">
+        <div class="profile__topline">
+          <h1 class="profile__name" data-testid="profile-name">{{ profile()!.displayName }}</h1>
+          @if (profile()!.role === 'ADMIN') {
+            <span class="badge badge--brand" data-testid="profile-role">Moderator</span>
+          }
+        </div>
+        <p class="profile__handle subtle" data-testid="profile-handle">&#64;{{ profile()!.handle }}</p>
+        @if (profile()!.bio) {
+          <p class="profile__bio" data-testid="profile-bio">{{ profile()!.bio }}</p>
+        }
+
+        <dl class="profile__stats">
+          <div><dt>Posts</dt><dd class="tabular" data-testid="profile-post-count">{{ authorPosts().length }}</dd></div>
+          <div><dt>Followers</dt><dd class="tabular" data-testid="profile-follower-count">{{ profile()!.followerCount }}</dd></div>
+          <div><dt>Following</dt><dd class="tabular" data-testid="profile-following-count">{{ profile()!.followingCount }}</dd></div>
+        </dl>
+      </div>
+
+      <div class="profile__actions">
+        @if (isOwn()) {
+          <a class="btn btn--ghost" routerLink="/settings/profile" data-testid="profile-edit">Edit profile</a>
+          <a class="btn btn--gradient" routerLink="/upload" data-testid="profile-upload">New post</a>
+        } @else {
+          <app-follow-button
+            [following]="profile()!.viewerFollows"
+            [handle]="profile()!.handle"
+            (toggled)="toggleFollow($event)"
+          />
+        }
+      </div>
+    </header>
+
+    <nav class="tabs" role="tablist" data-testid="profile-tabs">
+      <button type="button" class="tabs__tab" [class.is-active]="activeTab() === 'posts'"
+              (click)="select('posts')" role="tab" [attr.aria-selected]="activeTab() === 'posts'" data-testid="tab-posts">
+        Posts <span class="tabular subtle">{{ authorPosts().length }}</span>
+      </button>
+      <button type="button" class="tabs__tab" [class.is-active]="activeTab() === 'followers'"
+              (click)="select('followers')" role="tab" [attr.aria-selected]="activeTab() === 'followers'" data-testid="tab-followers">
+        Followers <span class="tabular subtle">{{ profile()!.followerCount }}</span>
+      </button>
+      <button type="button" class="tabs__tab" [class.is-active]="activeTab() === 'following'"
+              (click)="select('following')" role="tab" [attr.aria-selected]="activeTab() === 'following'" data-testid="tab-following">
+        Following <span class="tabular subtle">{{ profile()!.followingCount }}</span>
+      </button>
+    </nav>
+
+    @if (activeTab() === 'posts') {
+      @if (authorPosts().length === 0) {
+        <div class="state" data-testid="profile-posts-empty">
+          <span class="state__title">No photos yet</span>
+          <p class="muted">When {{ profile()!.displayName }} posts, the newest photo lands here first.</p>
+        </div>
+      } @else {
+        <app-post-grid [posts]="authorPosts()" [showAuthor]="false" testid="profile-grid" />
+      }
+    } @else {
+      <ul class="people" [attr.data-testid]="'people-' + activeTab()">
+        @for (person of activeTab() === 'followers' ? followers() : following(); track person.id) {
+          <li class="people__row card">
+            <a class="people__link" [routerLink]="['/u', person.handle]" [attr.data-testid]="'person-' + person.handle">
+              <app-avatar [name]="person.displayName" [handle]="person.handle" [size]="44" />
+              <span class="people__names">
+                <span class="people__name">{{ person.displayName }}</span>
+                <span class="subtle">&#64;{{ person.handle }}</span>
+              </span>
+            </a>
+          </li>
+        }
+      </ul>
+    }
+  }
+</div>

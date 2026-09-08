@@ -2,10 +2,40 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>App</title>
-    <base href="/" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <title>SnapGram</title>
+    <script>
+      /*
+       * Static-preview base-href shim.
+       *
+       * Production serves this SPA from the origin root, but the mockup preview host
+       * serves many builds side by side under /<mockup_id>/. The <base> element is
+       * written here, synchronously during head parsing, so it exists BEFORE the
+       * browser's preload scanner resolves any script or stylesheet URL — mutating a
+       * static <base> later would leave a round of speculative 404s behind.
+       *
+       * Only the first path segment is adopted, and only when it is NOT one of the
+       * app's own top-level routes, so the root deployment is never affected and deep
+       * links such as /<mockup_id>/u/alice still resolve their assets correctly.
+       */
+      (function () {
+        var APP_SEGMENTS = [
+          '', 'explore', 'login', 'signup', 'feed', 'upload',
+          'p', 'u', 'settings', 'moderation', 'admin', 'index.html'
+        ];
+        var first = window.location.pathname.split('/')[1] || '';
+        var href = APP_SEGMENTS.indexOf(first) === -1 ? '/' + first + '/' : '/';
+        document.write('<base href="' + href + '">');
+      })();
+    </script>
+    <noscript><base href="/" /></noscript>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#6d28d9" />
+    <meta name="description" content="SnapGram — share photos, follow people, and explore what the community is posting." />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%237c3aed'/%3E%3Cstop offset='60%25' stop-color='%23ec4899'/%3E%3Cstop offset='100%25' stop-color='%23f59e0b'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Ccircle cx='16' cy='16' r='6.5' fill='none' stroke='white' stroke-width='2.5'/%3E%3C/svg%3E"
+    />
   </head>
   <body>
     <app-root></app-root>

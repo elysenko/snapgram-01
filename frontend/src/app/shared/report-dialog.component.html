@@ -1,0 +1,64 @@
+<div class="scrim" (click)="dismissed.emit()" data-testid="report-scrim"></div>
+
+<div class="dialog card" role="dialog" aria-modal="true" aria-labelledby="report-title" data-testid="report-dialog">
+  @if (submitted()) {
+    <div class="dialog__done" data-testid="report-success">
+      <span class="dialog__tick" aria-hidden="true">✓</span>
+      <h2 id="report-title" class="dialog__title">Report received</h2>
+      <p class="muted">
+        Thanks — a moderator will review this post. You will not see any further updates on this report.
+      </p>
+      <button type="button" class="btn btn--primary btn--block" (click)="dismissed.emit()" data-testid="report-close">
+        Done
+      </button>
+    </div>
+  } @else {
+    <header class="dialog__head">
+      <h2 id="report-title" class="dialog__title">Report this post</h2>
+      <button type="button" class="dialog__x" (click)="dismissed.emit()" aria-label="Close" data-testid="report-dismiss">
+        ✕
+      </button>
+    </header>
+
+    <form (ngSubmit)="submit()">
+      <label class="field">
+        <span class="label">Why are you reporting it?</span>
+        <select
+          class="select"
+          name="category"
+          [ngModel]="category()"
+          (ngModelChange)="onCategory($event)"
+          data-testid="report-category"
+        >
+          @for (option of reasons; track option) {
+            <option [value]="option">{{ option }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="field">
+        <span class="label">Anything else we should know? <span class="subtle">(optional)</span></span>
+        <textarea
+          class="textarea"
+          name="detail"
+          rows="4"
+          [maxlength]="MAX"
+          placeholder="Add context for the moderator…"
+          [ngModel]="detail()"
+          (ngModelChange)="onDetail($event)"
+          data-testid="report-detail"
+        ></textarea>
+        <span class="hint">Reports are anonymous to the post author. Max {{ MAX }} characters.</span>
+      </label>
+
+      @if (error()) {
+        <span class="error-text" data-testid="report-error">{{ error() }}</span>
+      }
+
+      <div class="dialog__actions">
+        <button type="button" class="btn btn--ghost" (click)="dismissed.emit()" data-testid="report-cancel">Cancel</button>
+        <button type="submit" class="btn btn--danger" data-testid="report-submit">Submit report</button>
+      </div>
+    </form>
+  }
+</div>

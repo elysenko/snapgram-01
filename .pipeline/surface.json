@@ -1,22 +1,1056 @@
 {
   "_generated": true,
   "_scaffolded_at": "2026-09-08T00:00:00Z",
-  "fileBudget": { "maxLines": 400, "hardLimit": 500 },
+  "fileBudget": {
+    "maxLines": 400,
+    "hardLimit": 500
+  },
   "routes": [
-    { "method": "GET", "path": "/health" },
-    { "method": "GET", "path": "/trpc/users.findAll" },
-    { "method": "GET", "path": "/trpc/users.findById" }
+    {
+      "method": "GET",
+      "path": "/health"
+    },
+    {
+      "method": "GET",
+      "path": "/trpc/users.findAll"
+    },
+    {
+      "method": "GET",
+      "path": "/trpc/users.findById"
+    },
+    {
+      "method": "GET",
+      "path": "/api/health"
+    },
+    {
+      "method": "GET",
+      "path": "/api/health/deep"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/signup"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/login"
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me"
+    },
+    {
+      "method": "GET",
+      "path": "/api/users/:handle"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/users/me"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/users/me/avatar"
+    },
+    {
+      "method": "POST",
+      "path": "/api/users/:handle/follow"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/users/:handle/follow"
+    },
+    {
+      "method": "POST",
+      "path": "/api/posts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/posts/feed"
+    },
+    {
+      "method": "GET",
+      "path": "/api/posts/explore"
+    },
+    {
+      "method": "GET",
+      "path": "/api/posts/:id"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/posts/:id"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/posts/:id"
+    },
+    {
+      "method": "POST",
+      "path": "/api/posts/:id/like"
+    },
+    {
+      "method": "GET",
+      "path": "/api/posts/:id/comments"
+    },
+    {
+      "method": "POST",
+      "path": "/api/posts/:id/comments"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/comments/:id"
+    },
+    {
+      "method": "POST",
+      "path": "/api/posts/:id/report"
+    },
+    {
+      "method": "GET",
+      "path": "/api/moderation/reports"
+    },
+    {
+      "method": "POST",
+      "path": "/api/moderation/posts/:id/remove"
+    },
+    {
+      "method": "GET",
+      "path": "/api/media/:key"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/settings"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/settings"
+    }
   ],
   "components": [
-    { "selector": "app-root", "file": "frontend/src/app/app.component.ts", "maxLines": 400 },
-    { "selector": "app-home", "file": "frontend/src/app/home/home.component.ts", "maxLines": 400 }
+    {
+      "selector": "app-root",
+      "file": "frontend/src/app/app.component.ts",
+      "maxLines": 400
+    },
+    {
+      "selector": "app-avatar",
+      "file": "frontend/src/app/shared/avatar.component.ts",
+      "maxLines": 400
+    },
+    {
+      "selector": "app-post-card",
+      "file": "frontend/src/app/shared/post-card.component.ts",
+      "maxLines": 400
+    },
+    {
+      "selector": "app-post-grid",
+      "file": "frontend/src/app/shared/post-grid.component.ts",
+      "maxLines": 400
+    },
+    {
+      "selector": "app-comment-list",
+      "file": "frontend/src/app/shared/comment-list.component.ts",
+      "maxLines": 400
+    },
+    {
+      "selector": "app-report-dialog",
+      "file": "frontend/src/app/shared/report-dialog.component.ts",
+      "maxLines": 400
+    },
+    {
+      "selector": "app-follow-button",
+      "file": "frontend/src/app/shared/follow-button.component.ts",
+      "maxLines": 400
+    },
+    {
+      "selector": "app-login",
+      "file": "frontend/src/app/features/auth/login.component.ts",
+      "maxLines": 400
+    },
+    {
+      "selector": "app-signup",
+      "file": "frontend/src/app/features/auth/signup.component.ts",
+      "maxLines": 400
+    },
+    {
+      "selector": "app-explore",
+      "file": "frontend/src/app/features/explore/explore.component.ts",
+      "maxLines": 400
+    },
+    {
+      "selector": "app-feed",
+      "file": "frontend/src/app/features/feed/feed.component.ts",
+      "maxLines": 400
+    },
+    {
+      "selector": "app-upload",
+      "file": "frontend/src/app/features/upload/upload.component.ts",
+      "maxLines": 400
+    },
+    {
+      "selector": "app-post-detail",
+      "file": "frontend/src/app/features/post/post-detail.component.ts",
+      "maxLines": 400
+    },
+    {
+      "selector": "app-profile",
+      "file": "frontend/src/app/features/profile/profile.component.ts",
+      "maxLines": 400
+    },
+    {
+      "selector": "app-profile-settings",
+      "file": "frontend/src/app/features/settings/profile-settings.component.ts",
+      "maxLines": 400
+    },
+    {
+      "selector": "app-moderation",
+      "file": "frontend/src/app/features/moderation/moderation.component.ts",
+      "maxLines": 400
+    },
+    {
+      "selector": "app-admin-settings",
+      "file": "frontend/src/app/features/admin/admin-settings.component.ts",
+      "maxLines": 400
+    },
+    {
+      "selector": "app-not-found",
+      "file": "frontend/src/app/features/not-found.component.ts",
+      "maxLines": 400
+    }
   ],
   "testIds": [
-    { "id": "app-ready", "element": "div", "component": "app-root" },
-    { "id": "home-main", "element": "main", "component": "app-home" },
-    { "id": "home-title", "element": "h1", "component": "app-home" },
-    { "id": "users-loading", "element": "p", "component": "app-home" },
-    { "id": "users-error", "element": "p", "component": "app-home" },
-    { "id": "users-list", "element": "ul", "component": "app-home" }
+    {
+      "id": "app-ready",
+      "element": "div",
+      "component": "app-root"
+    },
+    {
+      "id": "app-header",
+      "element": "header",
+      "component": "app-root"
+    },
+    {
+      "id": "brand-link",
+      "element": "a",
+      "component": "app-root"
+    },
+    {
+      "id": "primary-nav",
+      "element": "nav",
+      "component": "app-root"
+    },
+    {
+      "id": "nav-explore",
+      "element": "a",
+      "component": "app-root"
+    },
+    {
+      "id": "nav-feed",
+      "element": "a",
+      "component": "app-root"
+    },
+    {
+      "id": "nav-upload",
+      "element": "a",
+      "component": "app-root"
+    },
+    {
+      "id": "nav-moderation",
+      "element": "a",
+      "component": "app-root"
+    },
+    {
+      "id": "header-upload-cta",
+      "element": "a",
+      "component": "app-root"
+    },
+    {
+      "id": "header-signin",
+      "element": "a",
+      "component": "app-root"
+    },
+    {
+      "id": "account-menu-trigger",
+      "element": "button",
+      "component": "app-root"
+    },
+    {
+      "id": "account-menu",
+      "element": "div",
+      "component": "app-root"
+    },
+    {
+      "id": "menu-profile",
+      "element": "a",
+      "component": "app-root"
+    },
+    {
+      "id": "menu-settings",
+      "element": "a",
+      "component": "app-root"
+    },
+    {
+      "id": "menu-moderation",
+      "element": "a",
+      "component": "app-root"
+    },
+    {
+      "id": "menu-admin",
+      "element": "a",
+      "component": "app-root"
+    },
+    {
+      "id": "menu-signout",
+      "element": "button",
+      "component": "app-root"
+    },
+    {
+      "id": "mobile-tabbar",
+      "element": "nav",
+      "component": "app-root"
+    },
+    {
+      "id": "tab-explore",
+      "element": "a",
+      "component": "app-root"
+    },
+    {
+      "id": "tab-feed",
+      "element": "a",
+      "component": "app-root"
+    },
+    {
+      "id": "tab-upload",
+      "element": "a",
+      "component": "app-root"
+    },
+    {
+      "id": "tab-profile",
+      "element": "a",
+      "component": "app-root"
+    },
+    {
+      "id": "tab-account",
+      "element": "a",
+      "component": "app-root"
+    },
+    {
+      "id": "app-main",
+      "element": "main",
+      "component": "app-root"
+    },
+    {
+      "id": "login-screen",
+      "element": "div",
+      "component": "app-login"
+    },
+    {
+      "id": "login-form",
+      "element": "form",
+      "component": "app-login"
+    },
+    {
+      "id": "login-email",
+      "element": "input",
+      "component": "app-login"
+    },
+    {
+      "id": "login-password",
+      "element": "input",
+      "component": "app-login"
+    },
+    {
+      "id": "login-submit",
+      "element": "button",
+      "component": "app-login"
+    },
+    {
+      "id": "login-error",
+      "element": "div",
+      "component": "app-login"
+    },
+    {
+      "id": "login-email-error",
+      "element": "span",
+      "component": "app-login"
+    },
+    {
+      "id": "login-password-error",
+      "element": "span",
+      "component": "app-login"
+    },
+    {
+      "id": "login-demo",
+      "element": "button",
+      "component": "app-login"
+    },
+    {
+      "id": "login-to-signup",
+      "element": "a",
+      "component": "app-login"
+    },
+    {
+      "id": "login-browse",
+      "element": "a",
+      "component": "app-login"
+    },
+    {
+      "id": "signup-screen",
+      "element": "div",
+      "component": "app-signup"
+    },
+    {
+      "id": "signup-form",
+      "element": "form",
+      "component": "app-signup"
+    },
+    {
+      "id": "signup-name",
+      "element": "input",
+      "component": "app-signup"
+    },
+    {
+      "id": "signup-email",
+      "element": "input",
+      "component": "app-signup"
+    },
+    {
+      "id": "signup-password",
+      "element": "input",
+      "component": "app-signup"
+    },
+    {
+      "id": "signup-confirm",
+      "element": "input",
+      "component": "app-signup"
+    },
+    {
+      "id": "signup-submit",
+      "element": "button",
+      "component": "app-signup"
+    },
+    {
+      "id": "signup-to-login",
+      "element": "a",
+      "component": "app-signup"
+    },
+    {
+      "id": "explore-page",
+      "element": "div",
+      "component": "app-explore"
+    },
+    {
+      "id": "explore-hero",
+      "element": "section",
+      "component": "app-explore"
+    },
+    {
+      "id": "explore-grid",
+      "element": "ul",
+      "component": "app-post-grid"
+    },
+    {
+      "id": "explore-loading",
+      "element": "ul",
+      "component": "app-explore"
+    },
+    {
+      "id": "explore-error",
+      "element": "div",
+      "component": "app-explore"
+    },
+    {
+      "id": "explore-empty",
+      "element": "div",
+      "component": "app-explore"
+    },
+    {
+      "id": "explore-count",
+      "element": "dd",
+      "component": "app-explore"
+    },
+    {
+      "id": "feed-page",
+      "element": "div",
+      "component": "app-feed"
+    },
+    {
+      "id": "feed-title",
+      "element": "h1",
+      "component": "app-feed"
+    },
+    {
+      "id": "feed-list",
+      "element": "div",
+      "component": "app-feed"
+    },
+    {
+      "id": "feed-loading",
+      "element": "div",
+      "component": "app-feed"
+    },
+    {
+      "id": "feed-error",
+      "element": "div",
+      "component": "app-feed"
+    },
+    {
+      "id": "feed-empty",
+      "element": "div",
+      "component": "app-feed"
+    },
+    {
+      "id": "feed-load-more",
+      "element": "button",
+      "component": "app-feed"
+    },
+    {
+      "id": "feed-progress",
+      "element": "span",
+      "component": "app-feed"
+    },
+    {
+      "id": "feed-end",
+      "element": "p",
+      "component": "app-feed"
+    },
+    {
+      "id": "post-card-<id>",
+      "element": "article",
+      "component": "app-post-card"
+    },
+    {
+      "id": "post-author-<id>",
+      "element": "a",
+      "component": "app-post-card"
+    },
+    {
+      "id": "post-media-link-<id>",
+      "element": "a",
+      "component": "app-post-card"
+    },
+    {
+      "id": "like-button-<id>",
+      "element": "button",
+      "component": "app-post-card"
+    },
+    {
+      "id": "like-count-<id>",
+      "element": "span",
+      "component": "app-post-card"
+    },
+    {
+      "id": "comment-link-<id>",
+      "element": "a",
+      "component": "app-post-card"
+    },
+    {
+      "id": "report-link-<id>",
+      "element": "a",
+      "component": "app-post-card"
+    },
+    {
+      "id": "comment-form-<id>",
+      "element": "form",
+      "component": "app-post-card"
+    },
+    {
+      "id": "comment-input-<id>",
+      "element": "input",
+      "component": "app-post-card"
+    },
+    {
+      "id": "comment-submit-<id>",
+      "element": "button",
+      "component": "app-post-card"
+    },
+    {
+      "id": "grid-post-<id>",
+      "element": "a",
+      "component": "app-post-grid"
+    },
+    {
+      "id": "upload-page",
+      "element": "div",
+      "component": "app-upload"
+    },
+    {
+      "id": "upload-form",
+      "element": "form",
+      "component": "app-upload"
+    },
+    {
+      "id": "upload-dropzone",
+      "element": "div",
+      "component": "app-upload"
+    },
+    {
+      "id": "upload-file-input",
+      "element": "input",
+      "component": "app-upload"
+    },
+    {
+      "id": "upload-caption",
+      "element": "textarea",
+      "component": "app-upload"
+    },
+    {
+      "id": "upload-submit",
+      "element": "button",
+      "component": "app-upload"
+    },
+    {
+      "id": "upload-error",
+      "element": "div",
+      "component": "app-upload"
+    },
+    {
+      "id": "upload-success",
+      "element": "div",
+      "component": "app-upload"
+    },
+    {
+      "id": "post-detail-page",
+      "element": "div",
+      "component": "app-post-detail"
+    },
+    {
+      "id": "post-detail",
+      "element": "div",
+      "component": "app-post-detail"
+    },
+    {
+      "id": "post-detail-author",
+      "element": "a",
+      "component": "app-post-detail"
+    },
+    {
+      "id": "post-detail-caption",
+      "element": "p",
+      "component": "app-post-detail"
+    },
+    {
+      "id": "post-detail-like",
+      "element": "button",
+      "component": "app-post-detail"
+    },
+    {
+      "id": "post-detail-like-count",
+      "element": "span",
+      "component": "app-post-detail"
+    },
+    {
+      "id": "post-report",
+      "element": "button",
+      "component": "app-post-detail"
+    },
+    {
+      "id": "post-edit",
+      "element": "button",
+      "component": "app-post-detail"
+    },
+    {
+      "id": "post-delete",
+      "element": "button",
+      "component": "app-post-detail"
+    },
+    {
+      "id": "post-missing",
+      "element": "div",
+      "component": "app-post-detail"
+    },
+    {
+      "id": "comment-section",
+      "element": "section",
+      "component": "app-comment-list"
+    },
+    {
+      "id": "comment-list",
+      "element": "ul",
+      "component": "app-comment-list"
+    },
+    {
+      "id": "comment-composer",
+      "element": "form",
+      "component": "app-comment-list"
+    },
+    {
+      "id": "comment-textarea",
+      "element": "textarea",
+      "component": "app-comment-list"
+    },
+    {
+      "id": "comment-post",
+      "element": "button",
+      "component": "app-comment-list"
+    },
+    {
+      "id": "comment-error",
+      "element": "span",
+      "component": "app-comment-list"
+    },
+    {
+      "id": "comments-empty",
+      "element": "p",
+      "component": "app-comment-list"
+    },
+    {
+      "id": "report-dialog",
+      "element": "div",
+      "component": "app-report-dialog"
+    },
+    {
+      "id": "report-category",
+      "element": "select",
+      "component": "app-report-dialog"
+    },
+    {
+      "id": "report-detail",
+      "element": "textarea",
+      "component": "app-report-dialog"
+    },
+    {
+      "id": "report-submit",
+      "element": "button",
+      "component": "app-report-dialog"
+    },
+    {
+      "id": "report-success",
+      "element": "div",
+      "component": "app-report-dialog"
+    },
+    {
+      "id": "report-dismiss",
+      "element": "button",
+      "component": "app-report-dialog"
+    },
+    {
+      "id": "follow-button-<handle>",
+      "element": "button",
+      "component": "app-follow-button"
+    },
+    {
+      "id": "profile-page",
+      "element": "div",
+      "component": "app-profile"
+    },
+    {
+      "id": "profile-header",
+      "element": "header",
+      "component": "app-profile"
+    },
+    {
+      "id": "profile-name",
+      "element": "h1",
+      "component": "app-profile"
+    },
+    {
+      "id": "profile-handle",
+      "element": "p",
+      "component": "app-profile"
+    },
+    {
+      "id": "profile-bio",
+      "element": "p",
+      "component": "app-profile"
+    },
+    {
+      "id": "profile-post-count",
+      "element": "dd",
+      "component": "app-profile"
+    },
+    {
+      "id": "profile-follower-count",
+      "element": "dd",
+      "component": "app-profile"
+    },
+    {
+      "id": "profile-following-count",
+      "element": "dd",
+      "component": "app-profile"
+    },
+    {
+      "id": "profile-tabs",
+      "element": "nav",
+      "component": "app-profile"
+    },
+    {
+      "id": "tab-posts",
+      "element": "button",
+      "component": "app-profile"
+    },
+    {
+      "id": "tab-followers",
+      "element": "button",
+      "component": "app-profile"
+    },
+    {
+      "id": "tab-following",
+      "element": "button",
+      "component": "app-profile"
+    },
+    {
+      "id": "profile-grid",
+      "element": "ul",
+      "component": "app-post-grid"
+    },
+    {
+      "id": "people-followers",
+      "element": "ul",
+      "component": "app-profile"
+    },
+    {
+      "id": "people-following",
+      "element": "ul",
+      "component": "app-profile"
+    },
+    {
+      "id": "profile-missing",
+      "element": "div",
+      "component": "app-profile"
+    },
+    {
+      "id": "profile-settings-page",
+      "element": "div",
+      "component": "app-profile-settings"
+    },
+    {
+      "id": "settings-form",
+      "element": "form",
+      "component": "app-profile-settings"
+    },
+    {
+      "id": "settings-name",
+      "element": "input",
+      "component": "app-profile-settings"
+    },
+    {
+      "id": "settings-bio",
+      "element": "textarea",
+      "component": "app-profile-settings"
+    },
+    {
+      "id": "settings-avatar-input",
+      "element": "input",
+      "component": "app-profile-settings"
+    },
+    {
+      "id": "settings-save",
+      "element": "button",
+      "component": "app-profile-settings"
+    },
+    {
+      "id": "settings-saved",
+      "element": "div",
+      "component": "app-profile-settings"
+    },
+    {
+      "id": "settings-signout",
+      "element": "button",
+      "component": "app-profile-settings"
+    },
+    {
+      "id": "moderation-page",
+      "element": "div",
+      "component": "app-moderation"
+    },
+    {
+      "id": "moderation-title",
+      "element": "h1",
+      "component": "app-moderation"
+    },
+    {
+      "id": "moderation-filters",
+      "element": "nav",
+      "component": "app-moderation"
+    },
+    {
+      "id": "moderation-filter-open",
+      "element": "button",
+      "component": "app-moderation"
+    },
+    {
+      "id": "moderation-filter-closed",
+      "element": "button",
+      "component": "app-moderation"
+    },
+    {
+      "id": "moderation-table",
+      "element": "ul",
+      "component": "app-moderation"
+    },
+    {
+      "id": "moderation-empty",
+      "element": "div",
+      "component": "app-moderation"
+    },
+    {
+      "id": "moderation-notice",
+      "element": "div",
+      "component": "app-moderation"
+    },
+    {
+      "id": "moderation-open-count",
+      "element": "span",
+      "component": "app-moderation"
+    },
+    {
+      "id": "report-row-<id>",
+      "element": "li",
+      "component": "app-moderation"
+    },
+    {
+      "id": "report-open-<id>",
+      "element": "button",
+      "component": "app-moderation"
+    },
+    {
+      "id": "moderation-panel",
+      "element": "aside",
+      "component": "app-moderation"
+    },
+    {
+      "id": "panel-remove",
+      "element": "button",
+      "component": "app-moderation"
+    },
+    {
+      "id": "panel-dismiss",
+      "element": "button",
+      "component": "app-moderation"
+    },
+    {
+      "id": "panel-post-link",
+      "element": "a",
+      "component": "app-moderation"
+    },
+    {
+      "id": "admin-settings-page",
+      "element": "div",
+      "component": "app-admin-settings"
+    },
+    {
+      "id": "admin-title",
+      "element": "h1",
+      "component": "app-admin-settings"
+    },
+    {
+      "id": "admin-credentials-banner",
+      "element": "div",
+      "component": "app-admin-settings"
+    },
+    {
+      "id": "admin-groups",
+      "element": "div",
+      "component": "app-admin-settings"
+    },
+    {
+      "id": "admin-group-<key>",
+      "element": "section",
+      "component": "app-admin-settings"
+    },
+    {
+      "id": "admin-input-<key>",
+      "element": "input",
+      "component": "app-admin-settings"
+    },
+    {
+      "id": "admin-save",
+      "element": "button",
+      "component": "app-admin-settings"
+    },
+    {
+      "id": "admin-saved",
+      "element": "div",
+      "component": "app-admin-settings"
+    },
+    {
+      "id": "not-found-page",
+      "element": "div",
+      "component": "app-not-found"
+    },
+    {
+      "id": "not-found-title",
+      "element": "span",
+      "component": "app-not-found"
+    }
+  ],
+  "screens": [
+    {
+      "route": "",
+      "flow": "redirect",
+      "target": "/explore"
+    },
+    {
+      "route": "/explore",
+      "flow": "explore",
+      "guard": null
+    },
+    {
+      "route": "/login",
+      "flow": "auth-login",
+      "guard": "guestGuard",
+      "query": [
+        "returnUrl"
+      ]
+    },
+    {
+      "route": "/signup",
+      "flow": "auth-signup",
+      "guard": "guestGuard",
+      "query": [
+        "returnUrl"
+      ]
+    },
+    {
+      "route": "/feed",
+      "flow": "feed",
+      "guard": "authGuard",
+      "query": [
+        "limit"
+      ]
+    },
+    {
+      "route": "/upload",
+      "flow": "upload",
+      "guard": "authGuard"
+    },
+    {
+      "route": "/p/:postId",
+      "flow": "post-detail",
+      "guard": null,
+      "query": [
+        "modal"
+      ]
+    },
+    {
+      "route": "/u/:handle",
+      "flow": "profile",
+      "guard": null,
+      "query": [
+        "tab"
+      ]
+    },
+    {
+      "route": "/settings/profile",
+      "flow": "profile-settings",
+      "guard": "authGuard"
+    },
+    {
+      "route": "/moderation",
+      "flow": "moderation",
+      "guard": "moderatorGuard",
+      "query": [
+        "status",
+        "panel"
+      ]
+    },
+    {
+      "route": "/admin/settings",
+      "flow": "admin-settings",
+      "guard": "moderatorGuard"
+    },
+    {
+      "route": "**",
+      "flow": "not-found",
+      "guard": null
+    }
   ]
 }

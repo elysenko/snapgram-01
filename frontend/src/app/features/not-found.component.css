@@ -1,0 +1,11 @@
+.notfound__code {
+  font-size: 56px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.notfound__actions { display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: center; }

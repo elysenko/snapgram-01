@@ -1,0 +1,12 @@
+<button
+  type="button"
+  class="btn follow"
+  [class.btn--primary]="!following()"
+  [class.btn--ghost]="following()"
+  [class.btn--sm]="compact()"
+  (click)="toggled.emit(!following())"
+  [attr.aria-pressed]="following()"
+  [attr.data-testid]="'follow-button-' + handle()"
+>
+  {{ following() ? 'Following' : 'Follow' }}
+</button>

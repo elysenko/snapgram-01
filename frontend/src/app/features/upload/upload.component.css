@@ -1,0 +1,83 @@
+.upload__banner { margin-bottom: var(--space-4); }
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-7) var(--space-4);
+  border: 2px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-alt);
+  text-align: center;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.dropzone--active { border-color: var(--color-brand); background: var(--color-brand-soft); }
+.dropzone--filled { padding: var(--space-3); gap: var(--space-3); }
+
+.dropzone__glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  font-size: 22px;
+  color: var(--color-brand);
+}
+
+.dropzone__title { font-weight: 650; font-size: var(--text-lg); }
+
+.dropzone__preview {
+  width: 100%;
+  max-height: 420px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-deep);
+}
+
+.dropzone__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  font-size: var(--text-sm);
+}
+
+.dropzone__name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dropzone__meta .btn { margin-left: auto; }
+
+.dropzone__pick { margin-top: var(--space-2); cursor: pointer; }
+
+.upload__caption { margin-top: var(--space-5); }
+
+.upload__actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: flex-end;
+  margin-top: var(--space-4);
+}
+
+.upload__tick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: var(--color-success-soft);
+  color: var(--color-success);
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.upload__done-actions { display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: center; }
+
+@media (max-width: 768px) {
+  .upload__actions { flex-direction: column-reverse; }
+  .upload__actions .btn { width: 100%; }
+  .dropzone { padding: var(--space-5) var(--space-3); }
+}

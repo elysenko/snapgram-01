@@ -1,0 +1,9 @@
+:host { display: inline-block; }
+
+.follow { min-width: 112px; }
+.follow:hover { filter: saturate(1.05); }
+
+@media (max-width: 768px) {
+  :host { display: block; }
+  .follow { width: 100%; }
+}

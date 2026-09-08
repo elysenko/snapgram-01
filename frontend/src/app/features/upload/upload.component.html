@@ -1,0 +1,87 @@
+<div class="page page--narrow" data-testid="upload-page">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title" data-testid="upload-title">New post</h1>
+      <p class="page-sub">JPEG or PNG, up to {{ maxLabel }}. It goes straight to the top of your profile.</p>
+    </div>
+  </header>
+
+  @if (success()) {
+    <div class="card card-pad state" data-testid="upload-success">
+      <span class="upload__tick" aria-hidden="true">✓</span>
+      <span class="state__title">Posted</span>
+      <p class="muted">Your photo is live. It is now the newest item on your profile and in your followers' feeds.</p>
+      <div class="upload__done-actions">
+        <button type="button" class="btn btn--primary" (click)="goToProfile()" data-testid="upload-view-profile">
+          View on my profile
+        </button>
+        <a class="btn btn--ghost" routerLink="/feed" data-testid="upload-to-feed">Back to feed</a>
+      </div>
+    </div>
+  } @else {
+    <form class="card card-pad" (ngSubmit)="submit()" data-testid="upload-form">
+      @if (serverError()) {
+        <div class="banner banner--error upload__banner" role="alert" data-testid="upload-error">{{ serverError() }}</div>
+      }
+
+      <div
+        class="dropzone"
+        [class.dropzone--active]="dragging()"
+        [class.dropzone--filled]="previewUrl()"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave()"
+        (drop)="onDrop($event)"
+        data-testid="upload-dropzone"
+      >
+        @if (previewUrl()) {
+          <img class="dropzone__preview" [src]="previewUrl()" alt="Selected photo preview" width="600" height="600" />
+          <div class="dropzone__meta">
+            <span class="dropzone__name" data-testid="upload-filename">{{ fileName() }}</span>
+            <span class="subtle tabular">{{ readableSize() }}</span>
+            <button type="button" class="btn btn--quiet btn--sm" (click)="clear()" data-testid="upload-clear">Remove</button>
+          </div>
+        } @else {
+          <span class="dropzone__glyph" aria-hidden="true">↑</span>
+          <span class="dropzone__title">Drag a photo here</span>
+          <span class="hint">or choose a file from your device — JPEG or PNG, {{ maxLabel }} max</span>
+        }
+
+        <label class="btn btn--ghost dropzone__pick">
+          <span>{{ previewUrl() ? 'Choose a different photo' : 'Choose a photo' }}</span>
+          <input
+            class="visually-hidden"
+            type="file"
+            accept="image/jpeg,image/png"
+            (change)="onFileChange($event)"
+            data-testid="upload-file-input"
+          />
+        </label>
+      </div>
+
+      <label class="field upload__caption">
+        <span class="label" for="upload-caption">Caption</span>
+        <textarea
+          id="upload-caption"
+          class="textarea"
+          name="caption"
+          rows="4"
+          [maxlength]="MAX_CAPTION"
+          placeholder="Where was it, what were you chasing?"
+          [ngModel]="caption()"
+          (ngModelChange)="onCaption($event)"
+          data-testid="upload-caption"
+        ></textarea>
+        <span class="hint tabular" data-testid="upload-caption-remaining">
+          {{ remaining() }} of {{ MAX_CAPTION }} characters left
+        </span>
+      </label>
+
+      <div class="upload__actions">
+        <a class="btn btn--ghost" routerLink="/feed" data-testid="upload-cancel">Cancel</a>
+        <button type="submit" class="btn btn--gradient" [disabled]="!canSubmit()" data-testid="upload-submit">
+          Share photo
+        </button>
+      </div>
+    </form>
+  }
+</div>

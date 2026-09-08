@@ -1,0 +1,19 @@
+<ul class="grid" [attr.data-testid]="testid()">
+  @for (post of posts(); track post.id) {
+    <li class="grid__cell">
+      <a class="tile" [routerLink]="['/p', post.id]" [attr.data-testid]="'grid-post-' + post.id">
+        <img class="tile__img" [src]="post.imageUrl" [alt]="post.caption || 'Photo by ' + post.author.displayName"
+             width="600" height="600" loading="lazy" />
+        <span class="tile__overlay">
+          <span class="tile__stats tabular">
+            <span data-testid="tile-likes">♥ {{ post.likeCount }}</span>
+            <span data-testid="tile-comments">💬 {{ post.commentCount }}</span>
+          </span>
+          @if (showAuthor()) {
+            <span class="tile__author">&#64;{{ post.author.handle }}</span>
+          }
+        </span>
+      </a>
+    </li>
+  }
+</ul>

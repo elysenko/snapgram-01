@@ -1,0 +1,112 @@
+<div class="page" data-testid="moderation-page">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title" data-testid="moderation-title">Moderation queue</h1>
+      <p class="page-sub">Reported posts from the community. Removing a post hides it from every read path.</p>
+    </div>
+    <span class="badge badge--open tabular" data-testid="moderation-open-count">{{ openCount() }} open</span>
+  </header>
+
+  @if (notice()) {
+    <div class="banner banner--success moderation__notice" role="status" data-testid="moderation-notice">
+      <span>{{ notice() }}</span>
+      <button type="button" class="btn btn--quiet btn--sm" (click)="clearNotice()" data-testid="moderation-notice-dismiss">
+        Dismiss
+      </button>
+    </div>
+  }
+
+  <nav class="tabs" data-testid="moderation-filters">
+    <button type="button" class="tabs__tab" [class.is-active]="activeStatus() === 'open'"
+            (click)="setStatus('open')" data-testid="moderation-filter-open">
+      Open <span class="tabular subtle">{{ openCount() }}</span>
+    </button>
+    <button type="button" class="tabs__tab" [class.is-active]="activeStatus() === 'closed'"
+            (click)="setStatus('closed')" data-testid="moderation-filter-closed">
+      Closed <span class="tabular subtle">{{ closedCount() }}</span>
+    </button>
+  </nav>
+
+  @if (loading()) {
+    <div class="skeleton mod-skeleton" data-testid="moderation-loading"></div>
+  } @else if (error()) {
+    <div class="banner banner--error" role="alert" data-testid="moderation-error">{{ error() }}</div>
+  } @else if (isEmpty()) {
+    <div class="state" data-testid="moderation-empty">
+      <span class="state__title">{{ activeStatus() === 'open' ? 'Queue is clear' : 'Nothing closed yet' }}</span>
+      <p class="muted">
+        {{ activeStatus() === 'open'
+            ? 'No open reports right now. New reports appear here the moment a member files one.'
+            : 'Reports you resolve will be archived on this tab.' }}
+      </p>
+    </div>
+  } @else {
+    <ul class="reports" data-testid="moderation-table">
+      @for (report of visible(); track report.id) {
+        <li class="card report" [class.report--selected]="report.id === panel()" [attr.data-testid]="'report-row-' + report.id">
+          <img class="report__thumb" [src]="report.post.imageUrl" [alt]="'Reported post ' + report.postId"
+               width="72" height="72" />
+          <div class="report__body">
+            <div class="report__meta">
+              <span class="report__id tabular">{{ report.id }}</span>
+              <span class="badge" [class.badge--open]="report.status === 'open'"
+                    [class.badge--closed]="report.status === 'closed'"
+                    [attr.data-testid]="'report-status-' + report.id">{{ report.status }}</span>
+              @if (report.post.removedAt) {
+                <span class="badge badge--danger" [attr.data-testid]="'report-removed-' + report.id">post removed</span>
+              }
+              <span class="subtle">{{ report.createdAt }} ago</span>
+            </div>
+            <p class="report__reason" [attr.data-testid]="'report-reason-' + report.id">{{ report.reason }}</p>
+            <div class="report__who">
+              <app-avatar [name]="report.reporter.displayName" [handle]="report.reporter.handle" [size]="22" />
+              <span class="subtle">reported by &#64;{{ report.reporter.handle }} · post by &#64;{{ report.post.author.handle }}</span>
+            </div>
+          </div>
+          <div class="report__actions">
+            <button type="button" class="btn btn--ghost btn--sm" (click)="openPanel(report.id)"
+                    [attr.data-testid]="'report-open-' + report.id">Review</button>
+            <a class="btn btn--quiet btn--sm" [routerLink]="['/p', report.postId]"
+               [attr.data-testid]="'report-view-' + report.id">View post</a>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+
+  @if (selected()) {
+    <div class="panel-scrim" (click)="closePanel()" data-testid="moderation-panel-scrim"></div>
+    <aside class="panel card" role="dialog" aria-label="Report detail" data-testid="moderation-panel">
+      <header class="panel__head">
+        <div>
+          <h2 class="panel__title">Report {{ selected()!.id }}</h2>
+          <span class="subtle">Filed {{ selected()!.createdAt }} ago by &#64;{{ selected()!.reporter.handle }}</span>
+        </div>
+        <button type="button" class="panel__x" (click)="closePanel()" aria-label="Close" data-testid="moderation-panel-close">✕</button>
+      </header>
+
+      <img class="panel__image" [src]="selected()!.post.imageUrl" alt="Reported photo" width="600" height="600" />
+
+      <dl class="panel__facts">
+        <div><dt>Post</dt><dd><a [routerLink]="['/p', selected()!.postId]" data-testid="panel-post-link">{{ selected()!.postId }}</a></dd></div>
+        <div><dt>Author</dt><dd><a [routerLink]="['/u', selected()!.post.author.handle]">&#64;{{ selected()!.post.author.handle }}</a></dd></div>
+        <div><dt>Status</dt><dd data-testid="panel-status">{{ selected()!.status }}</dd></div>
+      </dl>
+
+      <p class="panel__reason" data-testid="panel-reason">“{{ selected()!.reason }}”</p>
+
+      @if (selected()!.status === 'open') {
+        <div class="panel__actions">
+          <button type="button" class="btn btn--ghost btn--block" (click)="dismissReport(selected()!)" data-testid="panel-dismiss">
+            Close without action
+          </button>
+          <button type="button" class="btn btn--danger btn--block" (click)="removePost(selected()!)" data-testid="panel-remove">
+            Remove post
+          </button>
+        </div>
+      } @else {
+        <div class="banner banner--info" data-testid="panel-resolved">This report has already been resolved.</div>
+      }
+    </aside>
+  }
+</div>

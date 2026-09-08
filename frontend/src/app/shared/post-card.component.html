@@ -1,0 +1,109 @@
+<article class="card post" [attr.data-testid]="'post-card-' + post().id">
+  <header class="post__head">
+    <a class="post__author" [routerLink]="['/u', post().author.handle]" [attr.data-testid]="'post-author-' + post().id">
+      <app-avatar [name]="post().author.displayName" [handle]="post().author.handle" [size]="38" [ring]="true" />
+      <span class="post__names">
+        <span class="post__name">{{ post().author.displayName }}</span>
+        <span class="post__handle subtle">&#64;{{ post().author.handle }}</span>
+      </span>
+    </a>
+    <span class="post__time subtle" [attr.data-testid]="'post-time-' + post().id">{{ post().createdAt }}</span>
+  </header>
+
+  @if (linkToDetail()) {
+    <a class="post__media" [routerLink]="['/p', post().id]" [attr.data-testid]="'post-media-link-' + post().id">
+      <img [src]="post().imageUrl" [alt]="post().caption || 'Photo by ' + post().author.displayName"
+           width="600" height="600" />
+    </a>
+  } @else {
+    <div class="post__media">
+      <img [src]="post().imageUrl" [alt]="post().caption || 'Photo by ' + post().author.displayName"
+           width="600" height="600" />
+    </div>
+  }
+
+  <div class="post__body">
+    <div class="post__actions">
+      <button
+        type="button"
+        class="act"
+        [class.act--liked]="post().viewerHasLiked"
+        (click)="toggleLike()"
+        [attr.aria-pressed]="post().viewerHasLiked"
+        [attr.data-testid]="'like-button-' + post().id"
+      >
+        <span class="act__glyph" aria-hidden="true">{{ post().viewerHasLiked ? '♥' : '♡' }}</span>
+        <span class="tabular" [attr.data-testid]="'like-count-' + post().id">{{ post().likeCount }}</span>
+        <span class="visually-hidden">likes</span>
+      </button>
+
+      <a class="act" [routerLink]="['/p', post().id]" [attr.data-testid]="'comment-link-' + post().id">
+        <span class="act__glyph" aria-hidden="true">💬</span>
+        <span class="tabular">{{ post().commentCount }}</span>
+        <span class="visually-hidden">comments</span>
+      </a>
+
+      <a
+        class="act act--report"
+        [routerLink]="['/p', post().id]"
+        [queryParams]="{ modal: 'report' }"
+        [attr.data-testid]="'report-link-' + post().id"
+      >
+        <span class="act__glyph" aria-hidden="true">⚑</span>
+        <span>Report</span>
+      </a>
+    </div>
+
+    @if (post().caption) {
+      <p class="post__caption" [attr.data-testid]="'post-caption-' + post().id">
+        <a class="post__caption-author" [routerLink]="['/u', post().author.handle]">&#64;{{ post().author.handle }}</a>
+        @if (captionIsLong() && !captionExpanded()) {
+          <span>{{ post().caption!.slice(0, 120) }}…</span>
+          <button type="button" class="linkish" (click)="expandCaption()" [attr.data-testid]="'caption-more-' + post().id">
+            more
+          </button>
+        } @else {
+          <span>{{ post().caption }}</span>
+        }
+      </p>
+    }
+
+    @if (comments().length) {
+      <ul class="post__comments" [attr.data-testid]="'post-comments-' + post().id">
+        @for (comment of comments(); track comment.id) {
+          <li class="post__comment">
+            <a class="post__comment-author" [routerLink]="['/u', comment.author.handle]">&#64;{{ comment.author.handle }}</a>
+            <span>{{ comment.text }}</span>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (showCommentBox()) {
+      <form class="commentbox" (ngSubmit)="submit()" [attr.data-testid]="'comment-form-' + post().id">
+        <input
+          class="commentbox__input"
+          type="text"
+          name="comment"
+          placeholder="Add a comment…"
+          autocomplete="off"
+          [maxlength]="MAX_COMMENT"
+          [ngModel]="draft()"
+          (ngModelChange)="onDraft($event)"
+          [attr.data-testid]="'comment-input-' + post().id"
+        />
+        <button
+          type="submit"
+          class="commentbox__submit"
+          [disabled]="!canSubmit()"
+          [attr.data-testid]="'comment-submit-' + post().id"
+        >
+          Post
+        </button>
+      </form>
+      @if (draft().length > MAX_COMMENT - 80) {
+        <span class="hint" [attr.data-testid]="'comment-remaining-' + post().id">{{ remaining() }} characters left</span>
+      }
+    }
+  </div>
+</article>

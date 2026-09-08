@@ -1,0 +1,16 @@
+<span
+  class="avatar"
+  [class.avatar--ring]="ring()"
+  [style.width.px]="size()"
+  [style.height.px]="size()"
+  [style.font-size.px]="fontSize()"
+  [style.background]="imageUrl() ? 'transparent' : background()"
+  [attr.aria-label]="name() || handle()"
+  data-testid="avatar"
+>
+  @if (imageUrl()) {
+    <img [src]="imageUrl()" [alt]="name()" [width]="size()" [height]="size()" />
+  } @else {
+    {{ initials() }}
+  }
+</span>

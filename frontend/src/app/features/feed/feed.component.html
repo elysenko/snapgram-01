@@ -1,0 +1,59 @@
+<div class="page page--narrow" data-testid="feed-page">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title" data-testid="feed-title">Your feed</h1>
+      <p class="page-sub">Photos from the {{ followingCount() }} people you follow, newest first.</p>
+    </div>
+    <a class="btn btn--gradient btn--sm" routerLink="/upload" data-testid="feed-upload-cta">New post</a>
+  </header>
+
+  @if (loading()) {
+    <div data-testid="feed-loading">
+      @for (item of skeletons; track item) {
+        <div class="card feed-skeleton">
+          <div class="skeleton feed-skeleton__media"></div>
+          <div class="skeleton feed-skeleton__line"></div>
+          <div class="skeleton feed-skeleton__line feed-skeleton__line--short"></div>
+        </div>
+      }
+    </div>
+  } @else if (error()) {
+    <div class="banner banner--error" role="alert" data-testid="feed-error">{{ error() }}</div>
+  } @else if (isEmpty()) {
+    <div class="state" data-testid="feed-empty">
+      <span class="state__title">Your feed is quiet</span>
+      <p class="muted">Follow a few photographers and their newest work will appear here.</p>
+      <a class="btn btn--primary" routerLink="/explore">Find people on Explore</a>
+    </div>
+  } @else {
+    <div data-testid="feed-list">
+      @for (post of visible(); track post.id) {
+        <app-post-card
+          [post]="post"
+          [comments]="commentsFor(post.id)"
+          (likeToggled)="toggleLike($event)"
+          (commentAdded)="addComment($event)"
+        />
+      }
+    </div>
+
+    <div class="feed__foot">
+      @if (hasMore()) {
+        <button
+          type="button"
+          class="btn btn--ghost btn--block"
+          (click)="loadMore()"
+          [disabled]="loadingMore()"
+          data-testid="feed-load-more"
+        >
+          {{ loadingMore() ? 'Loading…' : 'Load more' }}
+        </button>
+        <span class="hint tabular" data-testid="feed-progress">
+          Showing {{ visible().length }} of {{ posts().length }}
+        </span>
+      } @else {
+        <p class="muted feed__end" data-testid="feed-end">You are all caught up.</p>
+      }
+    </div>
+  }
+</div>

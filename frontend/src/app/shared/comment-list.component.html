@@ -1,0 +1,56 @@
+<section class="comments" data-testid="comment-section">
+  <h3 class="comments__title">
+    Comments <span class="subtle tabular" data-testid="comment-count">({{ comments().length }})</span>
+  </h3>
+
+  @if (comments().length === 0) {
+    <p class="comments__empty" data-testid="comments-empty">No comments yet — start the conversation.</p>
+  } @else {
+    <ul class="comments__list" data-testid="comment-list">
+      @for (comment of comments(); track comment.id) {
+        <li class="comment" [attr.data-testid]="'comment-' + comment.id">
+          <app-avatar [name]="comment.author.displayName" [handle]="comment.author.handle" [size]="32" />
+          <div class="comment__body">
+            <div class="comment__meta">
+              <a class="comment__author" [routerLink]="['/u', comment.author.handle]">{{ comment.author.displayName }}</a>
+              <span class="subtle comment__time">{{ comment.createdAt }}</span>
+              @if (canDelete(comment)) {
+                <button
+                  type="button"
+                  class="comment__delete"
+                  (click)="removed.emit(comment.id)"
+                  [attr.data-testid]="'comment-delete-' + comment.id"
+                >
+                  Delete
+                </button>
+              }
+            </div>
+            <p class="comment__text">{{ comment.text }}</p>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+
+  <form class="composer" (ngSubmit)="submit()" data-testid="comment-composer">
+    <label class="label" for="comment-text">Add a comment</label>
+    <textarea
+      id="comment-text"
+      name="text"
+      class="textarea"
+      rows="3"
+      placeholder="Say something kind…"
+      [maxlength]="MAX"
+      [ngModel]="draft()"
+      (ngModelChange)="onDraft($event)"
+      data-testid="comment-textarea"
+    ></textarea>
+    <div class="composer__foot">
+      <span class="hint tabular" data-testid="comment-remaining">{{ remaining() }} / {{ MAX }}</span>
+      <button type="submit" class="btn btn--primary btn--sm" data-testid="comment-post">Post comment</button>
+    </div>
+    @if (error()) {
+      <span class="error-text" data-testid="comment-error">{{ error() }}</span>
+    }
+  </form>
+</section>

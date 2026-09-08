@@ -1,0 +1,71 @@
+<div class="page" data-testid="admin-settings-page">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title" data-testid="admin-title">Admin settings</h1>
+      <p class="page-sub">Service and integration credentials. Values are masked once stored.</p>
+    </div>
+    <a class="btn btn--ghost btn--sm" routerLink="/moderation" data-testid="admin-to-moderation">Moderation queue</a>
+  </header>
+
+  <div class="banner banner--warn admin__banner" role="alert" data-testid="admin-credentials-banner">
+    <span class="admin__banner-glyph" aria-hidden="true">⚠</span>
+    <span>{{ bannerText }}</span>
+  </div>
+
+  @if (saved()) {
+    <div class="banner banner--success admin__banner" role="status" data-testid="admin-saved">
+      Settings saved. Restart is not required — new credentials are picked up on the next request.
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="skeleton admin-skeleton" data-testid="admin-loading"></div>
+  } @else if (error()) {
+    <div class="banner banner--error" role="alert" data-testid="admin-error">{{ error() }}</div>
+  } @else {
+    <div class="groups" data-testid="admin-groups">
+      @for (group of groups(); track group.key) {
+        <section class="card card-pad group" [attr.data-testid]="'admin-group-' + group.key">
+          <header class="group__head">
+            <h2 class="group__title">{{ group.label }}</h2>
+            <span
+              class="badge"
+              [class.badge--closed]="group.configured"
+              [class.badge--danger]="!group.configured"
+              [attr.data-testid]="'admin-status-' + group.key"
+            >
+              {{ group.configured ? 'Configured' : 'Needs credentials' }}
+            </span>
+          </header>
+
+          @for (item of group.items; track item.key) {
+            <label class="field">
+              <span class="label" [attr.for]="'setting-' + item.key">{{ item.label }}
+                <code class="group__envkey">{{ item.key }}</code>
+              </span>
+              <input
+                [id]="'setting-' + item.key"
+                class="input"
+                type="text"
+                autocomplete="off"
+                [placeholder]="item.configured ? 'Stored — enter a new value to replace' : 'Not configured'"
+                [ngModel]="item.value"
+                [name]="item.key"
+                (ngModelChange)="update(item.key, $event)"
+                [attr.data-testid]="'admin-input-' + item.key"
+              />
+              <span class="hint">{{ item.hint }}</span>
+            </label>
+          }
+        </section>
+      }
+    </div>
+
+    <div class="admin__actions">
+      <span class="hint tabular" data-testid="admin-unconfigured-count">
+        {{ unconfigured().length }} value(s) still missing
+      </span>
+      <button type="button" class="btn btn--primary" (click)="save()" data-testid="admin-save">Save settings</button>
+    </div>
+  }
+</div>

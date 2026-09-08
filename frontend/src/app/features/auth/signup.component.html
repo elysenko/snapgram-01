@@ -1,0 +1,67 @@
+<div class="auth" data-testid="signup-screen">
+  <aside class="auth__aside">
+    <span class="auth__brand"><span class="auth__mark"></span><span class="auth__word">SnapGram</span></span>
+    <h2 class="auth__pitch">Start your<br />photo journal.</h2>
+    <p class="auth__blurb">Upload a JPEG or PNG up to 5 MB, add a caption, and it lands at the top of your profile.</p>
+  </aside>
+
+  <div class="auth__panel card card-pad">
+    <h1 class="auth__title" data-testid="signup-title">Create your account</h1>
+    <p class="page-sub">It takes about twenty seconds.</p>
+
+    @if (serverError()) {
+      <div class="banner banner--error auth__banner" role="alert" data-testid="signup-error">{{ serverError() }}</div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate data-testid="signup-form">
+      <label class="field">
+        <span class="label" for="signup-name">Display name</span>
+        <input id="signup-name" class="input" type="text" formControlName="displayName"
+               autocomplete="name" placeholder="How should we call you?" data-testid="signup-name" />
+        @if (invalid('displayName')) {
+          <span class="error-text" data-testid="signup-name-error">Enter a display name (60 characters max).</span>
+        }
+      </label>
+
+      <label class="field">
+        <span class="label" for="signup-email">Email</span>
+        <input id="signup-email" class="input" type="email" formControlName="email"
+               autocomplete="email" placeholder="you@example.com" data-testid="signup-email" />
+        @if (invalid('email')) {
+          <span class="error-text" data-testid="signup-email-error">Enter a valid email address.</span>
+        }
+      </label>
+
+      <label class="field">
+        <span class="label" for="signup-password">Password</span>
+        <input id="signup-password" class="input" type="password" formControlName="password"
+               autocomplete="new-password" placeholder="At least 8 characters" data-testid="signup-password" />
+        @if (invalid('password')) {
+          <span class="error-text" data-testid="signup-password-error">Password must be at least 8 characters.</span>
+        }
+      </label>
+
+      <label class="field">
+        <span class="label" for="signup-confirm">Confirm password</span>
+        <input id="signup-confirm" class="input" type="password" formControlName="confirmPassword"
+               autocomplete="new-password" placeholder="Repeat your password" data-testid="signup-confirm" />
+        @if (mismatch) {
+          <span class="error-text" data-testid="signup-confirm-error">Passwords do not match.</span>
+        }
+      </label>
+
+      <button type="submit" class="btn btn--gradient btn--block" data-testid="signup-submit">Create account</button>
+    </form>
+
+    @if (previewShortcut) {
+      <button type="button" class="btn btn--quiet btn--block auth__shortcut" (click)="useDemoMode()" data-testid="signup-demo">
+        {{ previewShortcut }}
+      </button>
+    }
+
+    <p class="auth__switch">
+      Already have an account?
+      <a routerLink="/login" [queryParams]="{ returnUrl: returnUrl() }" data-testid="signup-to-login">Sign in</a>
+    </p>
+  </div>
+</div>

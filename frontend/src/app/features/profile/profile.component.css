@@ -1,0 +1,66 @@
+.profile {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+.profile__info { flex: 1 1 auto; min-width: 0; }
+.profile__topline { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.profile__name { margin: 0; font-size: var(--text-2xl); }
+.profile__handle { margin: 0 0 var(--space-2); font-size: var(--text-sm); }
+.profile__bio { max-width: 56ch; color: var(--color-text-muted); }
+
+.profile__stats { display: flex; gap: var(--space-6); margin: var(--space-3) 0 0; }
+.profile__stats dt { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.07em; color: var(--color-text-subtle); }
+.profile__stats dd { margin: 2px 0 0; font-size: var(--text-xl); font-weight: 700; }
+
+.profile__actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+
+.profile-skeleton { height: 180px; border-radius: var(--radius-md); margin-bottom: var(--space-5); }
+
+.tabs {
+  display: flex;
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--space-5);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 46px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  font: inherit;
+  font-weight: 650;
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tabs__tab.is-active { color: var(--color-brand); border-bottom-color: var(--color-brand); }
+.tabs__tab:active { background: var(--color-surface-alt); }
+
+.people { display: flex; flex-direction: column; gap: var(--space-2); }
+.people__row { padding: 0; }
+.people__link { display: flex; align-items: center; gap: var(--space-3); min-height: 64px; padding: var(--space-3) var(--space-4); }
+.people__names { display: flex; flex-direction: column; font-size: var(--text-xs); }
+.people__name { font-weight: 650; font-size: var(--text-base); }
+.people__link:active { background: var(--color-surface-alt); }
+
+@media (max-width: 768px) {
+  .profile { flex-direction: column; align-items: center; text-align: center; gap: var(--space-4); }
+  .profile__bio { margin-left: auto; margin-right: auto; }
+  .profile__stats { justify-content: center; gap: var(--space-5); width: 100%; }
+  .profile__topline { justify-content: center; }
+  .profile__actions { width: 100%; }
+  .profile__actions .btn, .profile__actions app-follow-button { flex: 1 1 auto; }
+  .tabs__tab { flex: 1 1 auto; justify-content: center; padding: 0 var(--space-2); }
+}

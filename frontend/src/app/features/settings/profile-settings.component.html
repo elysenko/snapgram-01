@@ -1,0 +1,81 @@
+<div class="page page--narrow" data-testid="profile-settings-page">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title" data-testid="settings-title">Edit profile</h1>
+      <p class="page-sub">Only your display name, bio and avatar are editable — your handle is permanent.</p>
+    </div>
+    <a class="btn btn--ghost btn--sm" [routerLink]="profileLink()" data-testid="settings-view-profile">View profile</a>
+  </header>
+
+  @if (saved()) {
+    <div class="banner banner--success settings__banner" role="status" data-testid="settings-saved">
+      Profile updated. Your changes are live everywhere your name appears.
+    </div>
+  }
+
+  <form class="card card-pad" [formGroup]="form" (ngSubmit)="save()" novalidate data-testid="settings-form">
+    <section class="avatar-row">
+      <app-avatar
+        [name]="form.controls.displayName.value"
+        [handle]="auth.currentUser()?.handle ?? ''"
+        [imageUrl]="avatarPreview()"
+        [size]="76"
+        [ring]="true"
+      />
+      <div class="avatar-row__controls">
+        <label class="btn btn--ghost btn--sm">
+          <span>Upload avatar</span>
+          <input class="visually-hidden" type="file" accept="image/jpeg,image/png"
+                 (change)="onAvatarChange($event)" data-testid="settings-avatar-input" />
+        </label>
+        @if (avatarPreview()) {
+          <button type="button" class="btn btn--quiet btn--sm" (click)="removeAvatar()" data-testid="settings-avatar-remove">
+            Remove
+          </button>
+        }
+        <span class="hint">JPEG or PNG, 5 MB max. Square images look best.</span>
+        @if (avatarError()) {
+          <span class="error-text" data-testid="settings-avatar-error">{{ avatarError() }}</span>
+        }
+      </div>
+    </section>
+
+    <label class="field">
+      <span class="label" for="settings-name">Display name</span>
+      <input id="settings-name" class="input" type="text" formControlName="displayName"
+             autocomplete="name" data-testid="settings-name" />
+      @if (nameInvalid) {
+        <span class="error-text" data-testid="settings-name-error">Enter a display name (60 characters max).</span>
+      }
+    </label>
+
+    <label class="field">
+      <span class="label" for="settings-bio">Bio</span>
+      <textarea id="settings-bio" class="textarea" rows="4" formControlName="bio"
+                [maxlength]="MAX_BIO" placeholder="What do you shoot?" data-testid="settings-bio"></textarea>
+      <span class="hint tabular" data-testid="settings-bio-remaining">{{ bioRemaining() }} / {{ MAX_BIO }}</span>
+    </label>
+
+    <div class="settings__actions">
+      <a class="btn btn--ghost" [routerLink]="profileLink()" data-testid="settings-cancel">Cancel</a>
+      <button type="submit" class="btn btn--primary" data-testid="settings-save">Save changes</button>
+    </div>
+  </form>
+
+  <section class="card card-pad settings__section" data-testid="settings-account">
+    <h2>Account</h2>
+    <ul class="linklist">
+      <li><a class="linklist__item" routerLink="/upload" data-testid="settings-link-upload">Upload a photo</a></li>
+      <li><a class="linklist__item" routerLink="/feed" data-testid="settings-link-feed">Your feed</a></li>
+      @if (showModerationLinks()) {
+        <li><a class="linklist__item" routerLink="/moderation" data-testid="settings-link-moderation">Moderation queue</a></li>
+        <li><a class="linklist__item" routerLink="/admin/settings" data-testid="settings-link-admin">Admin settings</a></li>
+      }
+      <li>
+        <button type="button" class="linklist__item linklist__item--danger" (click)="signOut()" data-testid="settings-signout">
+          Sign out
+        </button>
+      </li>
+    </ul>
+  </section>
+</div>
