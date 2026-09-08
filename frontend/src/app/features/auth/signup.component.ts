@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 
 function passwordsMatch(group: AbstractControl): ValidationErrors | null {
@@ -19,7 +19,6 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
 export class SignupComponent {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
 
   readonly returnUrl = input<string | undefined>(undefined);
 
@@ -35,13 +34,6 @@ export class SignupComponent {
 
   readonly submitted = signal(false);
   readonly serverError = signal<string | null>(null);
-
-  /**
-   * Preview-only shortcut label. Held in TypeScript behind the build-time
-   * COLOSSUS_PREVIEW constant so the button and its text are dead-code-eliminated
-   * from the production bundle rather than shipping as a hidden template branch.
-   */
-  readonly previewShortcut = COLOSSUS_PREVIEW ? 'Skip signup — Demo Mode' : null;
 
   invalid(name: 'displayName' | 'email' | 'password' | 'confirmPassword'): boolean {
     const control = this.form.controls[name];
@@ -70,14 +62,5 @@ export class SignupComponent {
     } finally {
       this.submitting.set(false);
     }
-  }
-
-  /** Seeds a local, credential-free preview session — see AuthService.previewSignIn. */
-  useDemoMode(): void {
-    if (!COLOSSUS_PREVIEW) {
-      return;
-    }
-    this.auth.previewSignIn();
-    void this.router.navigateByUrl(this.returnUrl() ?? '/feed');
   }
 }

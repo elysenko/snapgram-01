@@ -34,10 +34,7 @@
             "styles": [
               "src/styles.css"
             ],
-            "scripts": [],
-            "define": {
-              "COLOSSUS_PREVIEW": "false"
-            }
+            "scripts": []
           },
           "configurations": {
             "production": {
@@ -67,13 +64,6 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
-            },
-            "mockup": {
-              "optimization": false,
-              "sourceMap": false,
-              "define": {
-                "COLOSSUS_PREVIEW": "true"
-              }
             }
           },
           "defaultConfiguration": "production"
