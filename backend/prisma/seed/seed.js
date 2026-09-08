@@ -64,6 +64,22 @@ function resolveAppRole(contractRole) {
   return match;
 }
 
+/**
+ * Derive the public profile slug from the email local part (alice@demo -> "alice"),
+ * appending a numeric suffix on collision. `handle` is nullable in the schema so a
+ * failure here can never block the login, but every platform account should still
+ * get a working /u/:handle profile page.
+ */
+async function deriveHandle(email, userId) {
+  const base = String(email).split('@')[0].toLowerCase().replace(/[^a-z0-9._-]/g, '') || 'user';
+  for (let n = 0; n < 100; n += 1) {
+    const candidate = n === 0 ? base : `${base}${n}`;
+    const taken = await prisma.user.findUnique({ where: { handle: candidate }, select: { id: true } });
+    if (!taken || taken.id === userId) return candidate;
+  }
+  return null;
+}
+
 /** Upsert the colossus_accounts row and the matching User for one platform account. */
 async function upsertAccount(account) {
   const role = resolveAppRole(account.role);
@@ -74,10 +90,18 @@ async function upsertAccount(account) {
     update: { role: account.role, passwordHash, loginPath },
     create: { role: account.role, email: account.email, passwordHash, loginPath },
   });
+  const displayName = `${role} (Colossus)`;
+  const existing = await prisma.user.findUnique({
+    where: { email: account.email },
+    select: { id: true, handle: true },
+  });
+  const handle = existing && existing.handle
+    ? existing.handle
+    : await deriveHandle(account.email, existing ? existing.id : null);
   await prisma.user.upsert({
     where: { email: account.email },
-    update: { role, passwordHash },
-    create: { email: account.email, name: `${role} (Colossus)`, role, passwordHash },
+    update: { role, passwordHash, handle, displayName },
+    create: { email: account.email, name: displayName, displayName, handle, role, passwordHash },
   });
   return role;
 }
