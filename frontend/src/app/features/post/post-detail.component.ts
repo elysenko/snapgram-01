@@ -1,9 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { PostComment, PostDetail, UserProfile } from '../../core/models';
-import { MOCK_ALL_POSTS, MOCK_COMMENTS, MOCK_PROFILES } from '../../core/mock-data';
+import { errorMessage, toApiError } from '../../core/api-error';
 import { AuthService } from '../../core/auth.service';
+import { CommentsApi } from '../../shared/api/comments-api.service';
+import { PostsApi } from '../../shared/api/posts-api.service';
+import { ReportsApi } from '../../shared/api/reports-api.service';
+import { UsersApi } from '../../shared/api/users-api.service';
 import { AvatarComponent } from '../../shared/avatar.component';
 import { CommentListComponent } from '../../shared/comment-list.component';
 import { FollowButtonComponent } from '../../shared/follow-button.component';
@@ -18,20 +22,24 @@ import { ReportDialogComponent } from '../../shared/report-dialog.component';
 })
 export class PostDetailComponent {
   private readonly router = inject(Router);
+  private readonly postsApi = inject(PostsApi);
+  private readonly commentsApi = inject(CommentsApi);
+  private readonly usersApi = inject(UsersApi);
+  private readonly reportsApi = inject(ReportsApi);
   readonly auth = inject(AuthService);
 
   /** Route params / query params, bound by withComponentInputBinding(). */
   readonly postId = input<string>('');
   readonly modal = input<string | undefined>(undefined);
 
-  /** Backend data — GET /api/posts/:id */
-  readonly posts = signal<PostDetail[]>([...MOCK_ALL_POSTS]);
-  /** Backend data — GET /api/posts/:id/comments */
-  readonly comments = signal<PostComment[]>([...MOCK_COMMENTS]);
-  /** Backend data — GET /api/users/:handle for the author panel. */
-  readonly profiles = signal<UserProfile[]>([...MOCK_PROFILES]);
+  /** GET /api/posts/:id */
+  readonly posts = signal<PostDetail[]>([]);
+  /** GET /api/posts/:id/comments */
+  readonly comments = signal<PostComment[]>([]);
+  /** GET /api/users/:handle for the author panel (carries viewerFollows). */
+  readonly profiles = signal<UserProfile[]>([]);
 
-  readonly loading = signal(false);
+  readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly reportSubmitted = signal(false);
   readonly editing = signal(false);
@@ -48,6 +56,48 @@ export class PostDetailComponent {
   readonly isOwnPost = computed(() => this.post()?.author.handle === this.auth.currentUser()?.handle);
   readonly reportOpen = computed(() => this.modal() === 'report');
 
+  /** Last id loaded, so the router reusing this component refetches. */
+  private loadedId = '';
+
+  constructor() {
+    // The router reuses the component instance across /p/a → /p/b, so the load
+    // is driven by the id input rather than by ngOnInit alone.
+    effect(() => {
+      const id = this.postId();
+      if (id && id !== this.loadedId) {
+        this.loadedId = id;
+        void this.load(id);
+      }
+    });
+  }
+
+  private async load(id: string): Promise<void> {
+    this.loading.set(true);
+    this.error.set(null);
+    this.deleted.set(false);
+    try {
+      const post = await this.postsApi.findOne(id);
+      this.posts.set([post]);
+      const [page, profile] = await Promise.all([
+        this.commentsApi.list(id, 100).catch(() => ({ items: [] as PostComment[], nextCursor: null })),
+        this.usersApi.getProfile(post.author.handle).catch(() => null),
+      ]);
+      this.comments.set(page.items);
+      this.profiles.set(profile ? [profile] : []);
+    } catch (error) {
+      const failure = toApiError(error);
+      // A deleted or moderator-removed post is the "no longer available" state
+      // the design already renders — not an error banner.
+      if (failure.status === 404) {
+        this.posts.set([]);
+      } else {
+        this.error.set(failure.message);
+      }
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
   openReport(): void {
     this.reportSubmitted.set(false);
     void this.router.navigate([], { queryParams: { modal: 'report' }, replaceUrl: false });
@@ -57,56 +107,80 @@ export class PostDetailComponent {
     void this.router.navigate([], { queryParams: { modal: null }, replaceUrl: true });
   }
 
-  confirmReport(_reason: string): void {
-    this.reportSubmitted.set(true);
+  /** POST /api/posts/:id/report */
+  async confirmReport(reason: string): Promise<void> {
+    try {
+      await this.reportsApi.create(this.postId(), reason);
+      this.reportSubmitted.set(true);
+    } catch (error) {
+      this.error.set(errorMessage(error));
+      this.closeReport();
+    }
   }
 
-  toggleLike(): void {
+  /** POST /api/posts/:id/like */
+  async toggleLike(): Promise<void> {
     const id = this.postId();
-    this.posts.update((posts) =>
-      posts.map((post) =>
-        post.id === id
-          ? { ...post, viewerHasLiked: !post.viewerHasLiked, likeCount: post.likeCount + (post.viewerHasLiked ? -1 : 1) }
-          : post,
-      ),
-    );
+    const before = this.posts();
+    this.patchPost(id, (post) => ({
+      viewerHasLiked: !post.viewerHasLiked,
+      likeCount: Math.max(0, post.likeCount + (post.viewerHasLiked ? -1 : 1)),
+    }));
+    try {
+      const result = await this.postsApi.toggleLike(id);
+      this.patchPost(id, () => ({ viewerHasLiked: result.liked, likeCount: result.likeCount }));
+    } catch (error) {
+      this.posts.set(before);
+      this.error.set(errorMessage(error));
+    }
   }
 
-  toggleFollow(next: boolean): void {
+  /** POST | DELETE /api/users/:handle/follow */
+  async toggleFollow(next: boolean): Promise<void> {
     const handle = this.post()?.author.handle;
-    this.profiles.update((profiles) =>
-      profiles.map((profile) =>
-        profile.handle === handle
-          ? { ...profile, viewerFollows: next, followerCount: profile.followerCount + (next ? 1 : -1) }
-          : profile,
-      ),
-    );
+    if (!handle) {
+      return;
+    }
+    const before = this.profiles();
+    this.patchProfile(handle, (profile) => ({
+      viewerFollows: next,
+      followerCount: Math.max(0, profile.followerCount + (next ? 1 : -1)),
+    }));
+    try {
+      const result = next ? await this.usersApi.follow(handle) : await this.usersApi.unfollow(handle);
+      this.patchProfile(handle, () => ({
+        viewerFollows: result.following,
+        followerCount: result.followerCount,
+      }));
+    } catch (error) {
+      this.profiles.set(before);
+      this.error.set(errorMessage(error));
+    }
   }
 
-  addComment(text: string): void {
-    const user = this.auth.currentUser();
-    this.comments.update((comments) => [
-      ...comments,
-      {
-        id: `cmt_local_${comments.length + 1}`,
-        postId: this.postId(),
-        author: {
-          id: user?.id ?? 'usr_me',
-          handle: user?.handle ?? 'you',
-          displayName: user?.displayName ?? 'You',
-          avatarUrl: user?.avatarUrl ?? null,
-          role: user?.role ?? 'USER',
-        },
-        text,
-        createdAt: 'now',
-      },
-    ]);
-    this.bumpCommentCount(1);
+  /** POST /api/posts/:id/comments */
+  async addComment(text: string): Promise<void> {
+    try {
+      const created = await this.commentsApi.create(this.postId(), text);
+      this.comments.update((comments) => [...comments, created]);
+      this.bumpCommentCount(1);
+    } catch (error) {
+      this.error.set(errorMessage(error));
+    }
   }
 
-  removeComment(commentId: string): void {
+  /** DELETE /api/comments/:id — allowed for the comment author or a moderator. */
+  async removeComment(commentId: string): Promise<void> {
+    const before = this.comments();
     this.comments.update((comments) => comments.filter((comment) => comment.id !== commentId));
     this.bumpCommentCount(-1);
+    try {
+      await this.commentsApi.remove(commentId);
+    } catch (error) {
+      this.comments.set(before);
+      this.bumpCommentCount(1);
+      this.error.set(errorMessage(error));
+    }
   }
 
   startEdit(): void {
@@ -118,21 +192,41 @@ export class PostDetailComponent {
     this.captionDraft.set(value);
   }
 
-  saveCaption(): void {
+  /** PATCH /api/posts/:id — 403 for anyone but the author. */
+  async saveCaption(): Promise<void> {
     const id = this.postId();
     const caption = this.captionDraft().trim();
-    this.posts.update((posts) => posts.map((post) => (post.id === id ? { ...post, caption } : post)));
-    this.editing.set(false);
+    try {
+      const updated = await this.postsApi.updateCaption(id, caption);
+      this.patchPost(id, () => ({ caption: updated.caption }));
+      this.editing.set(false);
+    } catch (error) {
+      this.error.set(errorMessage(error));
+    }
   }
 
-  deletePost(): void {
-    this.deleted.set(true);
+  /** DELETE /api/posts/:id — hard delete, cascading likes and comments. */
+  async deletePost(): Promise<void> {
+    try {
+      await this.postsApi.remove(this.postId());
+      this.deleted.set(true);
+    } catch (error) {
+      this.error.set(errorMessage(error));
+    }
   }
+
+  private patchPost(id: string, patch: (post: PostDetail) => Partial<PostDetail>): void {
+    this.posts.update((posts) => posts.map((post) => (post.id === id ? { ...post, ...patch(post) } : post)));
+  }
+
+  private patchProfile(handle: string, patch: (profile: UserProfile) => Partial<UserProfile>): void {
+    this.profiles.update((profiles) =>
+      profiles.map((profile) => (profile.handle === handle ? { ...profile, ...patch(profile) } : profile)),
+    );
+  }
+
 
   private bumpCommentCount(delta: number): void {
-    const id = this.postId();
-    this.posts.update((posts) =>
-      posts.map((post) => (post.id === id ? { ...post, commentCount: Math.max(0, post.commentCount + delta) } : post)),
-    );
+    this.patchPost(this.postId(), (post) => ({ commentCount: Math.max(0, post.commentCount + delta) }));
   }
 }

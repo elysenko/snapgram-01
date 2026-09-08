@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 
 function passwordsMatch(group: AbstractControl): ValidationErrors | null {
@@ -19,7 +19,6 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
 export class SignupComponent {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
 
   readonly returnUrl = input<string | undefined>(undefined);
 
@@ -36,8 +35,6 @@ export class SignupComponent {
   readonly submitted = signal(false);
   readonly serverError = signal<string | null>(null);
 
-  readonly previewShortcut = COLOSSUS_PREVIEW ? 'Skip signup — Demo Mode' : null;
-
   invalid(name: 'displayName' | 'email' | 'password' | 'confirmPassword'): boolean {
     const control = this.form.controls[name];
     return control.invalid && (control.touched || this.submitted());
@@ -47,24 +44,24 @@ export class SignupComponent {
     return this.form.hasError('mismatch') && (this.form.controls.confirmPassword.touched || this.submitted());
   }
 
-  submit(): void {
+  readonly submitting = signal(false);
+
+  async submit(): Promise<void> {
     this.submitted.set(true);
     this.serverError.set(null);
-    if (this.form.invalid) {
+    if (this.form.invalid || this.submitting()) {
       return;
     }
+    this.submitting.set(true);
     const { displayName, email, password } = this.form.getRawValue();
-    const problem = this.auth.signup(displayName, email, password, this.returnUrl() ?? null);
-    if (problem) {
-      this.serverError.set(problem);
+    try {
+      const problem = await this.auth.signup(displayName, email, password, this.returnUrl() ?? null);
+      if (problem) {
+        this.serverError.set(problem);
+      }
+    } finally {
+      this.submitting.set(false);
     }
   }
 
-  useDemoMode(): void {
-    if (!COLOSSUS_PREVIEW) {
-      return;
-    }
-    this.auth.previewSignIn();
-    void this.router.navigateByUrl(this.returnUrl() ?? '/feed');
-  }
 }

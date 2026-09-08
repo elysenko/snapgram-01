@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AdminSetting } from '../../core/models';
-import { MOCK_ADMIN_SETTINGS } from '../../core/mock-data';
+import { errorMessage } from '../../core/api-error';
+import { AdminApi } from '../../shared/api/admin-api.service';
 
 interface SettingGroup {
   key: string;
@@ -18,13 +19,18 @@ interface SettingGroup {
   styleUrl: './admin-settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AdminSettingsComponent {
-  /** Backend data — GET /api/admin/settings */
-  readonly settings = signal<AdminSetting[]>([...MOCK_ADMIN_SETTINGS]);
+export class AdminSettingsComponent implements OnInit {
+  private readonly adminApi = inject(AdminApi);
 
-  readonly loading = signal(false);
+  /** GET /api/admin/settings — moderator-only; values arrive already masked. */
+  readonly settings = signal<AdminSetting[]>([]);
+
+  readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly saved = signal(false);
+
+  /** Keys edited since the last load — only these are sent on save. */
+  private readonly dirty = new Map<string, string>();
 
   readonly bannerText =
     'The following need credentials to activate: S3-compatible object storage (AWS SDK v3 `@aws-sdk/client-s3`).';
@@ -47,17 +53,40 @@ export class AdminSettingsComponent {
 
   readonly unconfigured = computed(() => this.settings().filter((item) => !item.configured));
 
+  async ngOnInit(): Promise<void> {
+    try {
+      this.settings.set(await this.adminApi.list());
+    } catch (error) {
+      this.error.set(errorMessage(error));
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
   update(key: string, value: string): void {
+    this.dirty.set(key, value);
     this.settings.update((items) =>
       items.map((item) => (item.key === key ? { ...item, value } : item)),
     );
     this.saved.set(false);
   }
 
-  save(): void {
-    this.settings.update((items) =>
-      items.map((item) => (item.value.trim() ? { ...item, configured: true } : item)),
-    );
-    this.saved.set(true);
+  /**
+   * PATCH /api/admin/settings. Only edited keys are sent, so re-saving the form
+   * cannot overwrite a stored secret with the masked placeholder shown for it.
+   */
+  async save(): Promise<void> {
+    this.error.set(null);
+    const payload = Object.fromEntries(this.dirty);
+    try {
+      if (Object.keys(payload).length > 0) {
+        await this.adminApi.update(payload);
+        this.dirty.clear();
+        this.settings.set(await this.adminApi.list());
+      }
+      this.saved.set(true);
+    } catch (error) {
+      this.error.set(errorMessage(error));
+    }
   }
 }

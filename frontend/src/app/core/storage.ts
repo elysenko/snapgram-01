@@ -7,7 +7,24 @@
  * through these helpers so each build gets its own keyspace.
  */
 
-const NS = (typeof location !== 'undefined' && location.pathname.split('/')[1]) || 'app';
+function namespace(): string {
+  if (typeof document === 'undefined') {
+    return 'app';
+  }
+  // Derive the keyspace from <base href>, NOT from location.pathname.
+  //
+  // index.html sets <base> to '/' for a root deployment and to '/<mockup_id>/'
+  // on the multi-build preview host. The first *path* segment is the app's own
+  // route ('feed', 'moderation', 'u', …), so keying off it would give every
+  // route its own storage bucket — a member would sign in under 'login:token'
+  // and read back nothing under 'moderation:token'. The base href is constant
+  // for the whole deployment, which is exactly the scope these keys need.
+  const href = document.querySelector('base')?.getAttribute('href') ?? '/';
+  const segment = href.replace(/^\/+|\/+$/g, '');
+  return segment || 'app';
+}
+
+const NS = namespace();
 
 export const nsKey = (key: string): string => `${NS}:${key}`;
 
@@ -60,3 +77,7 @@ export function writeJson(key: string, value: unknown): void {
     /* no-op */
   }
 }
+
+/** Storage keys shared by AuthService and the HTTP interceptor. */
+export const TOKEN_KEY = 'token';
+export const USER_KEY = 'user';

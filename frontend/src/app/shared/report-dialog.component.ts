@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { REPORT_REASONS } from '../core/mock-data';
+import { REPORT_REASONS } from '../core/report-reasons';
 
 @Component({
   selector: 'app-report-dialog',

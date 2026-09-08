@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { errorMessage } from '../../core/api-error';
+import { PostsApi } from '../../shared/api/posts-api.service';
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const ACCEPTED = ['image/jpeg', 'image/png'];
@@ -15,10 +17,16 @@ const ACCEPTED = ['image/jpeg', 'image/png'];
 })
 export class UploadComponent {
   private readonly router = inject(Router);
+  private readonly postsApi = inject(PostsApi);
   readonly auth = inject(AuthService);
 
   readonly MAX_CAPTION = 2200;
   readonly maxLabel = '5 MB';
+
+  /** The selected file, held until submit so it can be posted as multipart. */
+  private readonly file = signal<File | null>(null);
+  /** Id of the created post, used to link straight to it after upload. */
+  readonly createdId = signal<string | null>(null);
 
   readonly fileName = signal<string | null>(null);
   readonly fileSize = signal<number>(0);
@@ -72,6 +80,7 @@ export class UploadComponent {
     this.previewUrl.set(null);
     this.fileName.set(null);
     this.fileSize.set(0);
+    this.file.set(null);
     this.serverError.set(null);
   }
 
@@ -89,19 +98,42 @@ export class UploadComponent {
       this.serverError.set('Image exceeds 5 MB');
       return;
     }
+    this.file.set(file);
     this.previewUrl.set(URL.createObjectURL(file));
   }
 
-  submit(): void {
+  /**
+   * POST /api/posts (multipart).
+   *
+   * The client-side precheck above mirrors the server's rules, but the server
+   * is still the authority: a 400 it raises — oversize body, magic bytes that
+   * are not JPEG/PNG — is surfaced verbatim in the same banner.
+   */
+  async submit(): Promise<void> {
     if (!this.canSubmit()) {
       if (!this.previewUrl() && !this.serverError()) {
         this.serverError.set('Choose a JPEG or PNG image to post.');
       }
       return;
     }
+
+    const file = this.file();
+    if (!file) {
+      this.serverError.set('Choose a JPEG or PNG image to post.');
+      return;
+    }
+
     this.submitting.set(true);
-    this.success.set(true);
-    this.submitting.set(false);
+    this.serverError.set(null);
+    try {
+      const post = await this.postsApi.create(file, this.caption());
+      this.createdId.set(post.id);
+      this.success.set(true);
+    } catch (error) {
+      this.serverError.set(errorMessage(error));
+    } finally {
+      this.submitting.set(false);
+    }
   }
 
   goToProfile(): void {

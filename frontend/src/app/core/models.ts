@@ -17,13 +17,16 @@ export interface UserSummary {
 }
 
 export interface UserProfile extends UserSummary {
-  email: string;
+  /** Absent on public profiles — GET /api/users/:handle never exposes it. */
+  email?: string;
   bio: string | null;
   createdAt: string;
   postCount: number;
   followerCount: number;
   followingCount: number;
   viewerFollows: boolean;
+  /** True when the viewer is looking at their own profile. */
+  isSelf?: boolean;
 }
 
 export interface PostSummary {

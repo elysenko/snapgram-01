@@ -1,10 +1,10 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { SessionUser, UserRole } from './models';
-import { readJson, removeRaw, writeJson, writeRaw } from './storage';
-
-const USER_KEY = 'user';
-const TOKEN_KEY = 'token';
+import { SessionUser } from './models';
+import { TOKEN_KEY, USER_KEY, readJson, readRaw, removeRaw, writeJson, writeRaw } from './storage';
+import { errorMessage } from './api-error';
+import { AuthApi } from '../shared/api/auth-api.service';
+import { UsersApi } from '../shared/api/users-api.service';
 
 function isSessionUser(value: unknown): value is SessionUser {
   if (!value || typeof value !== 'object') {
@@ -20,20 +20,11 @@ function isSessionUser(value: unknown): value is SessionUser {
   );
 }
 
-/** The account the preview session lands in when no explicit sign-in happened. */
-const PREVIEW_SESSION: SessionUser = {
-  id: 'usr_alice',
-  email: 'alice@snapgram.app',
-  handle: 'alice',
-  displayName: 'Alice Nakamura',
-  bio: 'Golden hour chaser. Film + digital. Tokyo → Lisbon.',
-  avatarUrl: null,
-  role: 'USER',
-};
-
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly router = inject(Router);
+  private readonly authApi = inject(AuthApi);
+  private readonly usersApi = inject(UsersApi);
 
   private readonly user = signal<SessionUser | null>(null);
 
@@ -49,9 +40,11 @@ export class AuthService {
   }
 
   /**
-   * Rehydrate from browser storage. Everything read here is untrusted: a bad
-   * shape or unparseable value clears the keys and leaves the app signed out
-   * rather than throwing during bootstrap and blanking the page.
+   * Rehydrate from browser storage, then re-verify against the API.
+   *
+   * Storage is the synchronous source so guards resolve on the first tick
+   * without a round trip; GET /api/auth/me then confirms the token is still
+   * valid and refreshes the profile, and a rejection clears the session.
    */
   private restore(): void {
     try {
@@ -61,13 +54,29 @@ export class AuthService {
       }
     } catch {
       this.clearSession();
+      return;
     }
+
+    if (!readRaw(TOKEN_KEY)) {
+      return;
+    }
+
+    void this.authApi
+      .me()
+      .then((user) => this.persistUser(user))
+      // A 401 has already cleared storage in the interceptor; mirror that here
+      // so the in-memory signal cannot outlive the token.
+      .catch(() => this.clearSession());
   }
 
-  private persist(user: SessionUser): void {
+  private persist(user: SessionUser, token: string): void {
+    writeRaw(TOKEN_KEY, token);
+    this.persistUser(user);
+  }
+
+  private persistUser(user: SessionUser): void {
     this.user.set(user);
     writeJson(USER_KEY, user);
-    writeRaw(TOKEN_KEY, 'session');
   }
 
   private clearSession(): void {
@@ -77,103 +86,81 @@ export class AuthService {
   }
 
   /**
-   * Sign in.
+   * Sign in. Resolves to an error string for the form banner, or null on
+   * success (in which case the caller has already been navigated onward).
    *
-   * In the static preview there is no API server, so credentials resolve
-   * locally and synchronously — a well-formed submission always succeeds and
-   * lands on the feed. The production branch is the real HTTP call, which the
-   * service layer fills in; `COLOSSUS_PREVIEW` is a build-time constant, so the
-   * preview branch is dead-code-eliminated from the production bundle.
    */
-  login(email: string, password: string, returnUrl?: string | null): string | null {
-    if (COLOSSUS_PREVIEW) {
-      const problem = validateCredentials(email, password);
-      if (problem) {
-        return problem;
-      }
-      const handle = email.split('@')[0].replace(/[^a-z0-9._]/gi, '').toLowerCase() || 'member';
-      this.persist({
-        ...PREVIEW_SESSION,
-        id: `usr_${handle}`,
-        email: email.trim(),
-        handle,
-        displayName: toDisplayName(handle),
-        role: handle === 'mod' ? 'ADMIN' : 'USER',
-      });
-      void this.router.navigateByUrl(returnUrl || '/feed');
-      return null;
+  async login(email: string, password: string, returnUrl?: string | null): Promise<string | null> {
+    const problem = validateLogin(email, password);
+    if (problem) {
+      return problem;
     }
 
-    // Production: POST /api/auth/login, persist the JWT, hydrate from /api/auth/me.
-    return null;
+    try {
+      const result = await this.authApi.login(email.trim(), password);
+      this.persist(result.user, result.accessToken);
+      await this.router.navigateByUrl(returnUrl || '/feed');
+      return null;
+    } catch (error) {
+      return errorMessage(error);
+    }
   }
 
-  signup(
+  async signup(
     displayName: string,
     email: string,
     password: string,
     returnUrl?: string | null,
-  ): string | null {
-    if (COLOSSUS_PREVIEW) {
-      const problem = validateCredentials(email, password);
-      if (problem) {
-        return problem;
-      }
-      if (!displayName.trim()) {
-        return 'Enter a display name.';
-      }
-      const handle = email.split('@')[0].replace(/[^a-z0-9._]/gi, '').toLowerCase() || 'member';
-      this.persist({
-        id: `usr_${handle}`,
-        email: email.trim(),
-        handle,
-        displayName: displayName.trim(),
-        bio: null,
-        avatarUrl: null,
-        role: 'USER',
-      });
-      void this.router.navigateByUrl(returnUrl || '/feed');
-      return null;
+  ): Promise<string | null> {
+    const problem = validateCredentials(email, password) ?? (displayName.trim() ? null : 'Enter a display name.');
+    if (problem) {
+      return problem;
     }
 
-    // Production: POST /api/auth/signup.
-    return null;
+    try {
+      const result = await this.authApi.signup(displayName.trim(), email.trim(), password);
+      this.persist(result.user, result.accessToken);
+      await this.router.navigateByUrl(returnUrl || '/feed');
+      return null;
+    } catch (error) {
+      return errorMessage(error);
+    }
   }
 
   /**
-   * Preview-only shortcut: seeds the same signed-in state the login form would
-   * produce, with no credentials involved, so every authenticated screen is
-   * reachable from the login page.
+   * PATCH /api/users/me. Scoped to the caller's own token server-side, which is
+   * what guarantees another member's profile cannot be touched from here.
    */
-  previewSignIn(role: UserRole = 'USER'): void {
-    if (!COLOSSUS_PREVIEW) {
-      return;
+  async saveProfile(patch: { displayName: string; bio: string | null }): Promise<string | null> {
+    try {
+      const updated = await this.usersApi.updateMe({
+        displayName: patch.displayName,
+        bio: patch.bio ?? '',
+      });
+      this.persistUser(updated);
+      return null;
+    } catch (error) {
+      return errorMessage(error);
     }
-    const existing = this.user();
-    if (existing) {
-      if (role !== 'USER' && existing.role === 'USER') {
-        this.persist({ ...existing, role });
-      }
-      return;
-    }
-    this.persist(role === 'USER' ? PREVIEW_SESSION : { ...PREVIEW_SESSION, role });
   }
 
-  /** Preview-only helper used by the account screen to preview the moderator UI. */
-  previewSetRole(role: UserRole): void {
-    if (!COLOSSUS_PREVIEW) {
-      return;
+  /** PUT /api/users/me/avatar. Returns an error string for the form banner. */
+  async saveAvatar(file: File): Promise<string | null> {
+    try {
+      this.persistUser(await this.usersApi.uploadAvatar(file));
+      return null;
+    } catch (error) {
+      return errorMessage(error);
     }
-    const existing = this.user() ?? PREVIEW_SESSION;
-    this.persist({ ...existing, role });
   }
 
-  updateProfile(patch: Partial<Pick<SessionUser, 'displayName' | 'bio' | 'avatarUrl'>>): void {
+  /** In-memory patch for optimistic UI updates. */
+  applyLocalProfile(patch: Partial<Pick<SessionUser, 'displayName' | 'bio' | 'avatarUrl'>>): void {
     const existing = this.user();
     if (!existing) {
       return;
     }
-    this.persist({ ...existing, ...patch });
+    this.persistUser({ ...existing, ...patch });
   }
 
   logout(): void {
@@ -182,12 +169,27 @@ export class AuthService {
   }
 }
 
-function validateCredentials(email: string, password: string): string | null {
+/**
+ * Sign-in precheck. Deliberately does NOT enforce a minimum password length:
+ * the platform mints the demo credentials and we cannot assume they satisfy
+ * our own signup rule — rejecting them client-side would make those accounts
+ * unusable without the server ever being asked.
+ */
+function validateLogin(email: string, password: string): string | null {
   if (!email.trim() || !password) {
     return 'Enter your email and password.';
   }
   if (!/^[^@\s]+@[^@\s]+$/.test(email.trim())) {
     return 'That email address does not look right.';
+  }
+  return null;
+}
+
+/** Sign-up precheck, mirroring the backend's SignupDto rules. */
+function validateCredentials(email: string, password: string): string | null {
+  const problem = validateLogin(email, password);
+  if (problem) {
+    return problem;
   }
   if (password.length < 8) {
     return 'Password must be at least 8 characters.';
@@ -195,6 +197,3 @@ function validateCredentials(email: string, password: string): string | null {
   return null;
 }
 
-function toDisplayName(handle: string): string {
-  return handle.charAt(0).toUpperCase() + handle.slice(1);
-}

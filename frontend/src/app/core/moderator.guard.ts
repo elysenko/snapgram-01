@@ -7,12 +7,6 @@ export const moderatorGuard: CanActivateFn = (_route, state): boolean | UrlTree 
   const auth = inject(AuthService);
   const router = inject(Router);
 
-  if (COLOSSUS_PREVIEW) {
-    // Reviewers must be able to open the moderation surfaces directly by URL.
-    auth.previewSignIn('ADMIN');
-    return true;
-  }
-
   if (auth.isModerator()) {
     return true;
   }

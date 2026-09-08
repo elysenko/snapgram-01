@@ -26,9 +26,15 @@ export class ProfileSettingsComponent {
   readonly avatarError = signal<string | null>(null);
   readonly saved = signal(false);
   readonly submitted = signal(false);
+  readonly saving = signal(false);
+
+  /** Pending avatar file, uploaded as multipart when the form is saved. */
+  private readonly avatarFile = signal<File | null>(null);
+  /** True when the member cleared their avatar and the change is unsaved. */
+  private readonly avatarCleared = signal(false);
 
   readonly bioRemaining = computed(() => this.MAX_BIO - (this.form.controls.bio.value?.length ?? 0));
-  readonly showModerationLinks = computed(() => COLOSSUS_PREVIEW || this.auth.isModerator());
+  readonly showModerationLinks = computed(() => this.auth.isModerator());
   readonly profileLink = computed(() => `/u/${this.auth.currentUser()?.handle ?? 'alice'}`);
 
   get nameInvalid(): boolean {
@@ -51,23 +57,58 @@ export class ProfileSettingsComponent {
       this.avatarError.set('Image exceeds 5 MB');
       return;
     }
+    this.avatarFile.set(file);
+    this.avatarCleared.set(false);
     this.avatarPreview.set(URL.createObjectURL(file));
   }
 
   removeAvatar(): void {
     this.avatarPreview.set(null);
+    this.avatarFile.set(null);
+    this.avatarCleared.set(true);
     this.avatarError.set(null);
   }
 
-  save(): void {
+  /**
+   * PATCH /api/users/me, then PUT /api/users/me/avatar when a new image was
+   * picked. Both are scoped server-side to the bearer token's own account, so
+   * nothing here can touch another member's profile.
+   */
+  async save(): Promise<void> {
     this.submitted.set(true);
     this.saved.set(false);
-    if (this.form.invalid) {
+    this.avatarError.set(null);
+    if (this.form.invalid || this.saving()) {
       return;
     }
     const { displayName, bio } = this.form.getRawValue();
-    this.auth.updateProfile({ displayName, bio: bio || null, avatarUrl: this.avatarPreview() });
-    this.saved.set(true);
+
+    this.saving.set(true);
+    try {
+      const problem = await this.auth.saveProfile({ displayName, bio: bio || null });
+      if (problem) {
+        this.avatarError.set(problem);
+        return;
+      }
+      const file = this.avatarFile();
+      if (file) {
+        const avatarProblem = await this.auth.saveAvatar(file);
+        if (avatarProblem) {
+          this.avatarError.set(avatarProblem);
+          return;
+        }
+        this.avatarFile.set(null);
+      } else if (this.avatarCleared()) {
+        // No delete endpoint exists; clearing is a local presentation choice
+        // until a replacement image is uploaded.
+        this.auth.applyLocalProfile({ avatarUrl: null });
+        this.avatarCleared.set(false);
+      }
+      this.avatarPreview.set(this.auth.currentUser()?.avatarUrl ?? null);
+      this.saved.set(true);
+    } finally {
+      this.saving.set(false);
+    }
   }
 
   signOut(): void {

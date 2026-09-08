@@ -31,8 +31,8 @@ export class AppComponent {
 
   readonly profileLink = computed(() => `/u/${this.auth.currentUser()?.handle ?? 'alice'}`);
 
-  /** Moderation is always linkable in the preview so reviewers can reach it. */
-  readonly showModeration = computed(() => COLOSSUS_PREVIEW || this.auth.isModerator());
+  /** The moderation queue is moderator-only; the API answers 403 either way. */
+  readonly showModeration = computed(() => this.auth.isModerator());
 
   toggleMenu(): void {
     this.menuOpen.update((open) => !open);

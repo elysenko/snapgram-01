@@ -12,14 +12,6 @@
     },
     {
       "method": "GET",
-      "path": "/trpc/users.findAll"
-    },
-    {
-      "method": "GET",
-      "path": "/trpc/users.findById"
-    },
-    {
-      "method": "GET",
       "path": "/api/health"
     },
     {
@@ -121,6 +113,18 @@
     {
       "method": "PATCH",
       "path": "/api/admin/settings"
+    },
+    {
+      "method": "GET",
+      "path": "/api/posts/by/:handle"
+    },
+    {
+      "method": "GET",
+      "path": "/api/users/:handle/followers"
+    },
+    {
+      "method": "GET",
+      "path": "/api/users/:handle/following"
     }
   ],
   "components": [
@@ -374,11 +378,6 @@
     {
       "id": "login-password-error",
       "element": "span",
-      "component": "app-login"
-    },
-    {
-      "id": "login-demo",
-      "element": "button",
       "component": "app-login"
     },
     {

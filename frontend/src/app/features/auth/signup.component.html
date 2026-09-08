@@ -53,12 +53,6 @@
       <button type="submit" class="btn btn--gradient btn--block" data-testid="signup-submit">Create account</button>
     </form>
 
-    @if (previewShortcut) {
-      <button type="button" class="btn btn--quiet btn--block auth__shortcut" (click)="useDemoMode()" data-testid="signup-demo">
-        {{ previewShortcut }}
-      </button>
-    }
-
     <p class="auth__switch">
       Already have an account?
       <a routerLink="/login" [queryParams]="{ returnUrl: returnUrl() }" data-testid="signup-to-login">Sign in</a>
